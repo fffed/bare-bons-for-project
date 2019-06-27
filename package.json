@@ -1,0 +1,19 @@
+{
+  "name": "bare-bons-for-project",
+  "version": "1.0.0",
+  "description": "set up a JavaScript project from scratch",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fffed/bare-bons-for-project.git"
+  },
+  "author": "fffed",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fffed/bare-bons-for-project/issues"
+  },
+  "homepage": "https://github.com/fffed/bare-bons-for-project#readme"
+}

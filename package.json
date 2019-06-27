@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/fffed/bare-bons-for-project/issues"
   },
-  "homepage": "https://github.com/fffed/bare-bons-for-project#readme"
+  "homepage": "https://github.com/fffed/bare-bons-for-project#readme",
+  "devDependencies": {
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.5",
+    "webpack-dev-server": "^3.7.2"
+  }
 }

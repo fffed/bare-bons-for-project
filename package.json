@@ -4,7 +4,7 @@
   "description": "set up a JavaScript project from scratch",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/fffed/bare-bons-for-project/issues"
   },
-  "homepage": "https://github.com/fffed/bare-bons-for-project#readme"
+  "homepage": "https://github.com/fffed/bare-bons-for-project#readme",
+  "devDependencies": {
+    "nodemon": "^1.19.1"
+  }
 }

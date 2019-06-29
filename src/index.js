@@ -14,6 +14,11 @@ app.use(cors()); // all routes are extended with CORS HTTP headers. By default a
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    req.me = users[1];
+    next();
+});  
+
 
 app.get('/', (req, res) => {
     return res.send('Received a GET HTTP method');
@@ -44,6 +49,7 @@ app.post('/messages', (req, res) => {
     const message = {
         id,
         text: req.body.text,
+        userId: req.me.id,
     };
 
     messages[id] = message;

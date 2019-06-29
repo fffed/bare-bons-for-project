@@ -1,4 +1,4 @@
-const users = {
+let users = {
     1: {
         id: '1',
         username: 'Robin Wieruch',
@@ -22,4 +22,4 @@ let messages = {
     },
 };
 
-export { users, messages };
+export default { users, messages };

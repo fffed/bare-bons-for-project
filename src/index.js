@@ -1,6 +1,8 @@
 import cors from 'cors';
 import express from 'express';
+import bodyParser from 'body-parser';
 import 'dotenv/config';
+import uuidv4 from 'uuid/v4';
 
 import { users, messages } from './tmpData';
 
@@ -8,6 +10,10 @@ import { users, messages } from './tmpData';
 const app = express();
 
 app.use(cors()); // all routes are extended with CORS HTTP headers. By default all routes are accessible for all domains now.
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 app.get('/', (req, res) => {
     return res.send('Received a GET HTTP method');
@@ -29,9 +35,20 @@ app.get('/messages/:messageId', (req, res) => {
 });
 
 
-
 app.post('/', (req, res) => {
     return res.send('Received a POST HTTP method');
+});
+
+app.post('/messages', (req, res) => {
+    const id = uuidv4();
+    const message = {
+        id,
+        text: req.body.text,
+    };
+
+    messages[id] = message;
+
+    return res.send(message);
 });
 
 

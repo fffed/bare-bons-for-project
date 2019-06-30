@@ -1,1 +1,1 @@
-console.log('Webpack will be here!')
+console.log(process.env.NODE_ENV);

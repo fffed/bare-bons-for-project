@@ -7,7 +7,7 @@ module.exports = {
 
     entry: './src/index.js',
 
-    devtool: 'source-map',
+    devtool: 'eval-source-map',
 
     plugins: [
       new CleanWebpackPlugin(),

@@ -3,9 +3,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: './src/index.js',
-    
+
     plugins: [
-      new HtmlWebpackPlugin()
+      new HtmlWebpackPlugin({
+        title: 'Hello Webpack bundled JavaScript Project',
+        template: './src/index.html'
+    })
     ],
 
     output: {

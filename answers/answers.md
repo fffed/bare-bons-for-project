@@ -1,6 +1,8 @@
 CONTENT
 - [SECURITY BASICS](#security-basics)
     - [MITM](#man-in-the-middle-attack)
+        - [Injection](#injection)
+        - [Broken Authentication](#broken-authentication)
     - [OWASP Top 10](#owasp-top-10)
     - [Same-Origin Policy](#same-origin-policy)
     - [CORS](#cross-origin-resource-sharing)
@@ -82,7 +84,7 @@ developers can produce more secure code.
 
 The **OWASP Top 10** is a list of the 10 most common web application security risks.
 
-1. **Injection**(SQL, NoSQL, OS, LDAP): attacks happen when untrusted data is
+1. ### Injection (SQL, NoSQL, OS, LDAP): attacks happen when untrusted data is
    sent to a code interpreter through a form input or some other data
    submission to a web application.
    
@@ -94,7 +96,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    - Use LIMIT and other SQL controls within queries(*parameterized queries*)
      to prevent mass disclosure of records in case of SQL injection.
    <br>
-2. **Broken Authentication**: Vulnerabilities in authentication (login) systems
+2. ### Broken Authentication : Vulnerabilities in authentication (login) systems
    can give attackers access to user or admin accounts.
    
    *To prevent*:
@@ -194,7 +196,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
      encoding
    - Use appropriate response headers: to prevent XSS in HTTP responses that
      aren't intended to contain any HTML or JavaScript, you can use the
-     *Content-Type* and **X-Content-Type-Options** headers to ensure that
+     `Content-Type` and `X-Content-Type-Options` headers to ensure that
      browsers interpret the responses in the way you intend
    <br>
 8. **Insecure Deserialization**: is the result of deserializing data from

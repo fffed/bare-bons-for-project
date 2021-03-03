@@ -25,11 +25,8 @@ manipulating traffic.
 - *Packet Injection*: An attacker injects malicious packets into data
   communication streams.Packet injection usually involves first sniffing to
   determine how and when to craft and send packets.
-- *Session Hijacking*: web applications often use a login mechanism that
-  generates a temporary session token to use for future requests to avoid
-  requiring the user to type a password at every page. An attacker can sniff
-  sensitive traffic to identify the session token for a user and use it to make
-  requests as the user.
+- *Session Hijacking*: when an attacker gains access to an online session via a
+  stolen session key or stolen browser cookies(by sniffing).
 - *SSL stripping* - downgrades a HTTPS connection to HTTP by intercepting the
   TLS authentication sent from the application to the user, as a result
   requests go to a HTTP equivalent endpoint, forcing the host to make requests
@@ -38,8 +35,6 @@ manipulating traffic.
 *Types* of MITM Attacks:
 - *Email Hijacking*
 - *Wi-Fi Eavesdropping*
-- Session Hijacking - when an attacker gains access to an online session via a
-  stolen session key or stolen browser cookies.
 - *DNS Spoofing* - altering a website's address record within a DNS (domain name
   server) server and a victim unknowingly visits the fake site.
 - *IP Spoofing* - involves an attacker disguising himself as an application by

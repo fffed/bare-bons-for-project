@@ -72,6 +72,7 @@ detection* are typically the key methods to detect a possible attack.
   applications
 <br>
 <br>
+
 ## OWASP Top 10
 The Open Web Application Security Project® (**OWASP**) is a nonprofit foundation
 that works to improve the security of software.
@@ -84,6 +85,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 1. **Injection**(SQL, NoSQL, OS, LDAP): attacks happen when untrusted data is
    sent to a code interpreter through a form input or some other data
    submission to a web application.
+   
    *To prevent*:
    - Use a safe API which avoids the use of the interpreter entirely
    - validating and/or sanitizing user-submitted data
@@ -94,6 +96,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    <br>
 2. **Broken Authentication**: Vulnerabilities in authentication (login) systems
    can give attackers access to user or admin accounts.
+   
    *To prevent*:
    - Implement multi-factor authentication
    - Do not deploy systems with default credentials
@@ -105,6 +108,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    <br>
 3. **Sensitive Data Exposure**: It consists of compromising data that should
    have been protected: credentials, credit card, social security, etc.
+   
    *To prevent*:
    - Don't store sensitive data unless absolutely needed, use tokenization,
      discard it as soon as possible
@@ -117,6 +121,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 4. **XML External Entities (XXE)**: For web applications that parse XML input,
    a poorly configured XML parser can be tricked to send sensitive data to an
    unauthorized external entity.
+   
    *To prevent*:
    - Use simpler data formats like JSON and avoid serialization
    - Validate XML
@@ -127,6 +132,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 5. **Broken Access control**: Restrictions on what authenticated users are
    allowed to do are often not properly enforced. Attackers can exploit these
    flaws to access unauthorized functionality and/or data.
+   
    *To prevent*:
    - Adopt a least privileged approach (each role is granted the lowest
      level of access required to perform its tasks)
@@ -135,13 +141,14 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    - Audit activity on servers and websites so that you are aware of who is
      doing what (and when)
    - Log failed access attempts and alert admins
-   - Enforce record ownership━don't allow users to create, read or delete any
+   - Enforce record ownership - don't allow users to create, read or delete any
      record
    - Rate limit API and controller access
    - JWT tokens should be invalidated logout
    <br>
 6. **Security misconfigurations**: It is often the result of using default
    configurations or displaying excessively verbose errors.
+   
    *To prevent*:
    - Deploy minimal platforms and remove unused features and services.
    - Use templates to deploy development, test, and production environments
@@ -153,6 +160,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 7. **Cross Site Scripting (XSS)**: XSS vulnerabilities occur when web
    applications allow users to add custom code into a URL path or onto a
    website that will be seen by other users. 
+  
    *Types of XSS*:
    - **Reflected XSS**: The application or API includes unvalidated and
      unescaped user input as part of HTML output. A successful attack can allow
@@ -169,6 +177,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
      takeover, MFA bypass, DOM-node replacement or defacement (such as Trojan
      login panels), attacks against the user’s browser such as malicious
      software downloads, keylogging, and other client-side attacks.
+     
    *To prevent*:
    - Escaping untrusted HTTP requests
    - Validating and/or sanitizing user-generated content
@@ -191,6 +200,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 8. **Insecure Deserialization**: is the result of deserializing data from
    untrusted sources, and can result in serious consequences like DDoS attacks
    and remote code execution attacks.
+   
    *To prevent*:
    - Prohibit the deserialization of data from untrusted sources
    - Implement digital signatures to ensure the integrity of serialized objects
@@ -202,6 +212,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
 9. **Using Components with known vulnerabilities**: No matter how secure your
    own code is, attackers can exploit APIs, dependencies and other third-party
    components if they are not themselves secure.
+   
    *To prevent*:
    - Remove all unnecessary dependencies
    - Have an inventory of all your components on the client-side and
@@ -212,8 +223,9 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
      National Vulnerability Database (NVD) for vulnerabilities in the
      components
    <br>
-10.**Insufficient logging and monitoring**: Failing to log errors or attacks
+10. **Insufficient logging and monitoring**: Failing to log errors or attacks
 and poor monitoring practices can introduce a human element to security risks.
+
    *To prevent*:
    - Make sure that all login failures, access control failures, and
      server-side input validation failures are logged with context so that you
@@ -376,7 +388,8 @@ The following principles should be followed to defend against CSRF:
 **stateless** (i.e. token using JWT / OAuth / other)
 <br>
 
-**Sessions**
+**SESSIONS**
+
 *Flow*:
 - user submits login credentials, e.g. email & password
 - server verifies the credentials against the DB
@@ -399,8 +412,9 @@ The following principles should be followed to defend against CSRF:
     - signed with a secret
     - protected with flags
 - SSR web apps, frameworks (`Spring`, `Rails`), scripting langs (`PHP`)
-<br>
-**Tokens**
+
+**TOKENS**
+
 *Flow*:
 - user submits login _credentials_, e.g. email & password
 - server verifies the credentials against the DB
@@ -527,6 +541,7 @@ with a simple JS API) or `sessionStorage`:
 <br>
 
 **JWT Auth**
+
 *Pros*:
 - server does not need to keep track of user sessions
 - horizontal scaling is easier (any server can verify the token)

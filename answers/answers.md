@@ -1,8 +1,6 @@
 CONTENT
 - [SECURITY BASICS](#security-basics)
     - [MITM](#man-in-the-middle-attack)
-        - [Injection](#injection)
-        - [Broken Authentication](#broken-authentication)
     - [OWASP Top 10](#owasp-top-10)
     - [Same-Origin Policy](#same-origin-policy)
     - [CORS](#cross-origin-resource-sharing)
@@ -19,7 +17,7 @@ CONTENT
 ## Man-in-the-middle attack
 A **man-in-the-middle** attack is a type of eavesdropping attack and consists
 of sitting between the connection of two parties and either observing or
-manipulating traffic.
+manipulating traffic(e.g. chrome pluggin).
 
 *Techniques* of MITM Attacks:
 - *Sniffing*: Attackers use packet capture tools to inspect packets at a low
@@ -82,9 +80,17 @@ that works to improve the security of software.
 By writing code and performing robust testing with these risks in mind,
 developers can produce more secure code.
 
+Tools to improve the security and code quality:
+ - Static Application Security Testing (SAST) Tools
+ - Dynamic Application Security Testing (DAST) Tools (Primarily for web apps)
+ - Interactive Application Security Testing (IAST) Tools (Primarily for web apps and web APIs)
+ - Keeping Open Source libraries up-to-date (to avoid Using Components with Known Vulnerabilities)
+ - Static Code Quality Tools(SonarQube, npm audit)
+
+
 The **OWASP Top 10** is a list of the 10 most common web application security risks.
 
-1. ### Injection (SQL, NoSQL, OS, LDAP): attacks happen when untrusted data is
+1. **Injection**(SQL, NoSQL, OS, LDAP): attacks happen when untrusted data is
    sent to a code interpreter through a form input or some other data
    submission to a web application.
    
@@ -96,8 +102,16 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    - Use LIMIT and other SQL controls within queries(*parameterized queries*)
      to prevent mass disclosure of records in case of SQL injection.
    <br>
-2. ### Broken Authentication : Vulnerabilities in authentication (login) systems
+2. **Broken Authentication**: Vulnerabilities in authentication (login) systems
    can give attackers access to user or admin accounts.
+
+   *Types* of attacks:
+   - Brute-force Attack
+   - Rainbow Tables Cracking(Rainbow Table is a large dictionary with
+     pre-calculated hashes and the passwords from which they were calculated).
+     To protect against a rainbow-table attack, combine a random value,
+     referred to as salt, with the password before encrypting it.
+   - Session Stealing
    
    *To prevent*:
    - Implement multi-factor authentication
@@ -122,7 +136,7 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    <br>
 4. **XML External Entities (XXE)**: For web applications that parse XML input,
    a poorly configured XML parser can be tricked to send sensitive data to an
-   unauthorized external entity.
+   unauthorized external entity. Also for FE actual svg and pdf formats.
    
    *To prevent*:
    - Use simpler data formats like JSON and avoid serialization
@@ -146,12 +160,14 @@ The **OWASP Top 10** is a list of the 10 most common web application security ri
    - Enforce record ownership - don't allow users to create, read or delete any
      record
    - Rate limit API and controller access
-   - JWT tokens should be invalidated logout
+   - JWT tokens should be invalidated on logout
    <br>
 6. **Security misconfigurations**: It is often the result of using default
    configurations or displaying excessively verbose errors.
    
    *To prevent*:
+   - group roles instead of an individual user access 
+   - whitelisting
    - Deploy minimal platforms and remove unused features and services.
    - Use templates to deploy development, test, and production environments
      that are preconfigured to meet the organization’s security policies.
@@ -236,6 +252,8 @@ and poor monitoring practices can introduce a human element to security risks.
      a centralized log management solutions
    - Penetration testing
    - Establishing effective monitoring practices
+
+Any question could be escalate to security team if necessary that could help.
 <br>
 <br>
 
@@ -337,6 +355,7 @@ In addition, CSP can prevent the following common vulnerabilities:
 - Dynamic CSS using `CSSStyleSheet.insertRule()`
 - Dynamic Javascript code using `eval()`
 
+Helmet.js helps you secure your Express apps by setting various HTTP headers.
 <br>
 <br>
 
@@ -378,6 +397,8 @@ The following principles should be followed to defend against CSRF:
     - Use double submit cookies
 - Consider implementing user interaction based protection for highly sensitive operations
 - Do not use GET requests for state changing operations.
+
+HTTPS helps with preventing CSRF attacks
 <br>
 <br>
 
@@ -388,6 +409,11 @@ The following principles should be followed to defend against CSRF:
 
 **stateful** (i.e. session using a cookie)
 **stateless** (i.e. token using JWT / OAuth / other)
+
+**Basic authentication** is a simple authentication scheme built into the HTTP
+protocol. The client sends HTTP requests with the `Authorization` header that
+contains the word `Basic` word followed by a space and a base64-encoded string
+`username:password`.
 <br>
 
 **SESSIONS**
@@ -454,7 +480,7 @@ The following principles should be followed to defend against CSRF:
   - no security concern if read by 3rd party
   - carries no meaningful data (random string)
   - even if encrypted, still a 1-1 match
-- encoded (`URL`) - not for security, but compat
+- encoded (`URL`) - not for security
 
 **Attributes**:
 - `Domain` and `Path` (can only be used on a given site & route)
@@ -478,7 +504,9 @@ JSON Web Tokens (JWT) is a method of communicating between two parties securely.
 
 - open standard for authorization & info exchange
 - *compact*, *self-contained*, *URL-safe* tokens
-- signed with *symmetric* (secret) or *asymmetric* (public/private) key
+- signed with *symmetric* (secret) or *asymmetric* (public/private) key(if
+  someone could read data from token he couldn't sign it with exactly the same
+  signature without 'secret')
 - contains **header** (meta), **payload** (claims), and **signature** delimited by `.`
 
 **Security**:
@@ -491,8 +519,12 @@ JSON Web Tokens (JWT) is a method of communicating between two parties securely.
 - encoded (`Base64Url`) - not for security, but transport(one way of making
   sure the data is uncorrupted as it does not compress or encrypt data)
   - payload can be decoded and read
-  - no sensitive/private info should be stored
+  - no sensitive/private info should be stored (as could be easily read)
   - access tokens should be short-lived
+
+*Amazon Cognito* provides authentication, authorization, and user management for
+your web and mobile apps. Your users can sign in directly with a user name and
+password, or through a third party such as Facebook, Amazon, Google or Apple.
 
 **XSS**:
 - client-side script injections
@@ -667,6 +699,17 @@ OAuth is built on the following central components:
     - *Client Credential* is used for server-to-server scenarios
     - *Assertion Flow*  is similar to the client credential flow
 
+*Pros*:
+ - Popularity — most companies use OAuth in their APIs.
+ - Simplicity of implementation and a large amount of manuals and reference materials.
+ - Availability of the ready-made solutions that can be changed to fit your needs.
+
+*Cons*:
+ - Data misuse
+ - There is no common format, as a result, each service requires its own implementation.
+ - When a token is stolen, an attacker gains access to the secure data for a
+   while. To minimize this risk a token with signature can be used.
+ - If service have some problems then everyone would experience them also
 
 
 
@@ -678,3 +721,6 @@ data to disk or streaming it.
 
 **Deserialization** is just the opposite: converting serialized data back into
 objects the application can use.
+
+
+

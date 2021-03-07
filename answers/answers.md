@@ -6,18 +6,24 @@ CONTENT
     - [CORS](#cross-origin-resource-sharing)
     - [CSP](#content-security-policy)
     - [CSRF](#cross-site-request-forgery)
-    - [Auth Types](#auth-types)
+    - [Authorization Types](#authorization-types)
         -[Cookies](#cookies)
         -[JWT](#jwt)
-        -[Options for Auth in SPAs/APIs](#options-for-auth-in-spas/apis)
-        -[OAuth](oauth)
+        -[Options for Auth in SPAs](#options-for-auth-in-spas)
+        -[OAuth](#oauth)
+    -[Security Headers](#security-headers)
+- [PERFORMANCE OPTIMIZATIONS](#performance-optimizations)
+   - [Critical Rendering Path](#critical-rendering-path)
+   - [High performant animations](#high-performant-animations)
+   - [Repaint/reflow](#repaint/reflow)
+   - [Layout thrashing](#layout-trashing)
 
 # SECURITY BASICS
 
 ## Man-in-the-middle attack
 A **man-in-the-middle** attack is a type of eavesdropping attack and consists
 of sitting between the connection of two parties and either observing or
-manipulating traffic(e.g. chrome pluggin).
+manipulating traffic(e.g., chrome pluggin).
 
 *Techniques* of MITM Attacks:
 - *Sniffing*: Attackers use packet capture tools to inspect packets at a low
@@ -710,11 +716,145 @@ OAuth is built on the following central components:
  - When a token is stolen, an attacker gains access to the secure data for a
    while. To minimize this risk a token with signature can be used.
  - If service have some problems then everyone would experience them also
+<br>
+<br>
+
+## Security Headers
+**HTTP security headers** are a subset of HTTP headers and are exchanged between a
+web client and a server to specify the security-related details of HTTP communication.
+HTTP security headers provide an extra layer of security by restricting
+behaviors that the browser and server allow once the web application is
+running.
+
+*The Most Important HTTP Security Headers*:
+- *Strict-Transport-Security*: HTTP Strict Transport Security (HSTS) enforces the
+  use of encrypted HTTPS connections instead of plain-text HTTP communication.
+- *Content-Security-Policy*: allows you to precisely control permitted content
+  sources and many other parameters(prevent XSS).
+- *X-Frame-Options*: prevent a page from being loaded into any iframes(prevent XSS) 
+- *X-Content-Type-Options*: tells the browser, strictly follow provided
+  Mime/Type, and don't try to guess.
+- *Feature-Policy*:  is designed to turn off features that you don't expect to
+  be used(e.g. webcam)
+- *Referrer-Policy*: controls how much of the referrer information (host, query
+  params, etc) are sent within the request.  
+- *Cache Control*: indicates the preferences for caching the page output.   
+<br>
+<br>
+
+# PERFORMANCE OPTIMIZATIONS
+
+## Critical Rendering Path
+
+The **Critical Rendering Path** is the sequence of steps the browser goes through
+to convert the HTML, CSS, and JavaScript into pixels on the screen. Optimizing
+the critical render path improves render performance.
+
+1. Constructing the DOM Tree
+2. Constructing the CSSOM Tree
+3. Running JavaScript
+4. Creating the Render Tree
+5. Generating the Layout
+6. Painting
+
+Once the browser gets the response, it starts parsing it. When it encounters a
+dependency, it tries to download it. If it's a *stylesheet* file, the browser
+will have to parse it completely before rendering the page, and that's why
+**CSS is** said to be **render blocking**. If it's a *script*, the browser has
+to: stop parsing, download the script, and run it. Only after that can it
+continue parsing, because JavaScript programs can alter the contents of a web
+page (HTML, in particular). And that's why **JS is** called **parser blocking**.
+This why, if we have a JavaScript file that references elements within the
+document, it must be placed after the appearance of that document.
+
+*Sync* scripts block the parser - use `async` scripts.
+
+DOM is constructed incrementally, as the bytes arrive on the "wire". Unlike
+HTML parsing, CSS is not incremental - we must wait for the entire file.
+
+The **Render Tree** is a combination of both the DOM and CSSOM. It is a Tree that
+represents what will be eventually rendered on the page. This means that it
+only captures the visible content and will not include, for example, elements
+that have been hidden with CSS using `display: none`.
+
+Once render tree is ready, perform **layout (reflow)** (aka, compute size of
+all the nodes, etc.), it's based on *meta* `viewport` tag in HTML.Once layout
+is complete, render pixels to the screen.
+
+**Initial view** - also known as **"above the fold"**, is the part of a web page
+visible to a user before they scroll.
+
+**Stylesheets optimization**:
+The browser will only treat the resources that match the current *media*
+(device type, screen size) as necessary, while lowering the priority of all the
+other stylesheets (they will be processed anyway, but not as part of the
+critical rendering path). For example, if you add the `media="print"` attribute
+to the style tag these styles won't interfere with your critical rendering
+path. To further improve the process, you can also make some of the styles
+inlined. This saves us at least one roundtrip to the server that would have
+otherwise been required to get the stylesheet.
+
+**Performance Optimization Strategies**:
+1. Optimize your networking stack: reduce DNS lookups, avoid redirects, fewer
+   HTTP requests, use CDN
+2. Minimizing the amount of data to be transferred over the wire:
+    - **Minifying**,
+    - **Compressing**(gzip)
+    - **Caching**(`Expires` header),
+    - optimize images and pick optimal format
+3. Reducing the total number of resources to be transferred over the wire
+4. Inline just the required resources for above the fold
+5. Defer the rest until after the above the fold is visible
+6. Lazy load / defer images and defer / async JS
+
+**Tools to help**:
+- Identify critical CSS via Chrome DevTools(Timeline)
+<br>
+<br>
+
+
+## High performant animations
+
+
+## Repaint/reflow
+
+
+##layout thrashing
+
+
+DOM/CSSOM modification → dirty tree: ideally, recalculated once, immediately
+prior to paint, except you can force a *synchronous* layout (vary bad)!
+First iteration marks tree as dirty, second iteration forces layout:
+```javascript
+  for (n in nodes) {
+    n.style.left = n.offsetLeft + 1 + "px";
+  }
+```
+Paint process has variable costs based on:
+- Total area that needs to be (re)painted: we want to update the minimal amount
+- Pixel rendering cost varies based on applied effects: some styles are more
+  expensive than others
 
 
 
 
 --------------------
+
+Eliminate jank and memory leaks:
+  - Performance == 60 FPS:
+      - 16.6 ms budget per frame
+      - Shared budget for your code, GC, layout, and painting
+      - Use frames view to hunt down and eliminate jank
+  - Profile and optimize your code:
+      - Profile your JavaScript code
+      - Profile the cost of layout and rendering!
+      - Minimize CPU > GPU interaction
+  - Eliminate JS and DOM memory leaks:
+      - Monitor and diff heap usage to identify memory leaks
+
+
+
+-------------------
 **Serialization** means taking objects from the application code and converting
 them into a format that can be used for another purpose, such as storing the
 data to disk or streaming it.

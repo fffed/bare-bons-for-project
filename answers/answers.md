@@ -7,15 +7,15 @@ CONTENT
     - [CSP](#content-security-policy)
     - [CSRF](#cross-site-request-forgery)
     - [Authorization Types](#authorization-types)
-        -[Cookies](#cookies)
-        -[JWT](#jwt)
-        -[Options for Auth in SPAs](#options-for-auth-in-spas)
-        -[OAuth](#oauth)
-    -[Security Headers](#security-headers)
+        - [Cookies](#cookies)
+        - [JWT](#jwt)
+        - [Options for Auth in SPAs](#options-for-auth-in-spas--apis)
+        - [OAuth](#oauth)
+    - [Security Headers](#security-headers)
 - [PERFORMANCE OPTIMIZATIONS](#performance-optimizations)
    - [Critical Rendering Path](#critical-rendering-path)
    - [High performant animations](#high-performant-animations)
-   - [Repaint/reflow](#repaint/reflow)
+   - [Repaint/reflow](#repaintreflow)
    - [Layout thrashing](#layout-trashing)
 
 # SECURITY BASICS
@@ -603,7 +603,7 @@ with a simple JS API) or `sessionStorage`:
 <br>
 <br>
 
-### Options for Auth in SPAs/APIs
+### Options for Auth in SPAs / APIs
 1. Sessions
 2. Stateless JWT
 3. Stateful JWT
@@ -816,10 +816,10 @@ otherwise been required to get the stylesheet.
 ## High performant animations
 
 
-## Repaint/reflow
+## Repaint/Reflow
 
 
-##layout thrashing
+## Layout thrashing
 
 
 DOM/CSSOM modification → dirty tree: ideally, recalculated once, immediately

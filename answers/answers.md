@@ -1,4 +1,8 @@
 CONTENT
+- [COMMUNICATION PROTOCOLS]
+    - [TCP/TSL/UDP](#tsptsludp)
+    - [HTTPS Purpose](#https-purpose)
+    - [HTTP vs HTTP 2.0 Advantages](#http-vs-http-2.0-advantages)
 - [SECURITY BASICS](#security-basics)
     - [MITM](#man-in-the-middle-attack)
     - [OWASP Top 10](#owasp-top-10)
@@ -16,7 +20,30 @@ CONTENT
    - [Critical Rendering Path](#critical-rendering-path)
    - [High performant animations](#high-performant-animations)
    - [Repaint/reflow](#repaintreflow)
-   - [Layout thrashing](#layout-trashing)
+   - [Layout thrashing](#layout-thrashing)
+   - [Performance measurement and profiling](#performance-measurement-and-profiling)
+   - [RAIL Model](#rail-model)
+
+
+# COMMUNICATION PROTOCOLS
+
+## TCP/TSL/UDP basics
+
+## HTTPS Purpose
+
+## HTTP vs HTTP 2.0 Advantages
+
+HTTP 2.0 in a nutshell:
+- New binary framing
+- One connection (session)
+- Many parallel requests (streams)
+- Header compression
+- Stream prioritization
+- Server push
+
+**HTTP server push** server can push multiple resources in response to one
+request. Client can cancel stream if it doesn't want the resource. Resource
+goes into browsers cache. "Inlining" is a variant of "Server Push".
 
 # SECURITY BASICS
 
@@ -812,33 +839,113 @@ otherwise been required to get the stylesheet.
 <br>
 <br>
 
-
 ## High performant animations
 
+There used to be just one way to do a timed loop in JavaScript - `setInterval()`.
+For the purposes of animation, the goal is sixty “frames” per second to appear
+smooth.
+You can stop an animation by getting the timeout or interval reference, and
+clearing it.
+The problem is that even though we specify this precision accurately, the
+browser might be busy performing other operations, and our setTimeout calls
+might not make it in time for the repaint, and it's going to be delayed to the
+next cycle. This is bad because we lose one frame, and in the next the
+animation is performed 2 times.
 
-## Repaint/Reflow
+`requestAnimationFrame` is an API that passes the responsibility of scheduling
+animation drawing directly to the browser. It will signal to the browser that a
+script-based animation needs to be resampled by enqueuing a **callback** to the
+**animation frame request callback list**.
+
+Why better?
+- The browser can optimize it, so animations will be smoother
+- Frames are only drawn when the browser is ready to paint and there are no
+  ready frames waiting to be drawn.
+- Animations in background tabs, minimized windows, or otherwise hidden parts
+  of a page will stop, allowing the CPU to chill
+- More battery-friendly
+
+`requestAnimationFrame` does not:
+- Guarantee when it'll paint; only that it'll paint when needed.
+- Guarantee the synchronicity of the animations. For example, if you start two
+animations at the same time but then one of the animations is in an area that
+is visible and the other is not, the first animation will go on playing while
+the other will not.
+- Paint until the callback function has finished executing, even if you try to
+  trigger a reflow mid-callback by using any of the methods that would trigger
+  a reflow and repaint in normal conditions, like `getComputedStyle()`
 
 
-## Layout thrashing
+16 milliseconds(60fps, 11.11ms for 90fps) is not a lot of time! The budget is split between:
+- Application code(our code)
+- Style recalculation
+- Layout recalculation
+- Garbage collection
+- Painting
+(Not necessarily in this order, and we (hopefully) don't have to perform all of
+them on each frame!)
+
+If we can't finish work in 16 ms *frame* is "dropped" - not rendered. We will
+wait until next `vsync`.
+
+Dropped frames = "jank".
+
+To prevent junks:
+- Your code must yield control in less than 16 ms! (Aim for <10ms, browser needs to
+do extra work: GC, layout, paint. "10 ms" is not absolute - e.g. slower CPU's)
+- Browser won't (can't) interrupt your code: split long-running functions,
+  aggregate events (e.g. handle scroll events once per frame)
+
+*CSS3 Animations*
+If we use properties that only affect the composition step of the rendering
+algorithm, we will get the best performance: animate with `transform` and
+`opacity` properties.
+
+*Hardware Acceleration*:
+GPU is really fast at compositing, matrix operations and alpha blends.
+Certain elements are GPU backed automatically: canvas, video, CSS3 animations.
+
+Forcing a GPU layer (to ensure that the browser knows what you plan to
+animate):
+- In CSS: `will-change` its fallback - `transform:translateZ(0)`,
+- In JavaScript: Setting a transform with a 3D characteristic such as
+  `translate3d()` and `matrix3d()` will create a layer.
+
+Don't abuse it, it can hurt performance: every layer you create requires GPU
+memory and management.
+
+Reduce complexity!
+
+If you need some data processing for an animation, you should consider moving
+the task to a web worker. Good use cases are tasks such as data sorting,
+searching, and model generation.
+
+CSS(declarative) vs JavaScript(imperative) performance:
+- CSS-based animations, and Web Animations where supported natively, are
+  typically handled on a thread known as the **"compositor thread"**. This is
+  different from the browser's "main thread", where styling, layout, painting,
+  and JavaScript are executed. This means that if the browser is running some
+  expensive tasks on the main thread, these animations can keep going without
+  being interrupted.
+- Other changes to `transforms` and `opacity` can, in many cases, also be
+  handled by the compositor thread.
+- If any animation triggers paint, layout, or both, the "main thread" will be
+  required to do work. This is true for both CSS- and JavaScript-based
+  animations, and the overhead of layout or paint will likely dwarf any work
+  associated with CSS or JavaScript execution, rendering the question moot.
+- Animating in JavaScript does give you a lot of control: starting, pausing,
+  reversing, interrupting and cancelling are trivial. Some effects, like
+  parallax scrolling, can only be achieved in JavaScript.
 
 
-DOM/CSSOM modification → dirty tree: ideally, recalculated once, immediately
-prior to paint, except you can force a *synchronous* layout (vary bad)!
-First iteration marks tree as dirty, second iteration forces layout:
-```javascript
-  for (n in nodes) {
-    n.style.left = n.offsetLeft + 1 + "px";
-  }
-```
-Paint process has variable costs based on:
-- Total area that needs to be (re)painted: we want to update the minimal amount
-- Pixel rendering cost varies based on applied effects: some styles are more
-  expensive than others
+**Debounce** or **throttle** your input handlers.
 
+The **FLIP technique** pre-optimizes an animation before execution. The idea is to
+invert the state of animations. Normally, we animate “straight ahead,” doing
+some expensive calculations on every single frame. FLIP precalculates the
+changes based on their final states. The first frame is an offset of the final
+state. This way the animation plays out in a much cheaper way.
 
-
-
---------------------
 
 Eliminate jank and memory leaks:
   - Performance == 60 FPS:
@@ -851,6 +958,174 @@ Eliminate jank and memory leaks:
       - Minimize CPU > GPU interaction
   - Eliminate JS and DOM memory leaks:
       - Monitor and diff heap usage to identify memory leaks
+<br>
+<br>
+
+## Repaint/Reflow
+The user or your application can perform other tasks during the time that a
+repaint or reflow occurring - browser blocking.
+
+Layout phase calculates the size of each element:
+- width, height, position
+- margins, padding, absolute and relative positions
+- propagate height based on contents of each element, etc... 
+
+If we resize the parent container - all elements under it (and around it,
+possibly) will have to be recomputed!
+
+Be careful about triggering expensive layout updates: adding nodes, removing
+nodes, updating styles, ...
+
+Style recalculation is forcing a layout update (change in size, position, etc.).
+
+- Layout is normally scoped to the whole document.
+- The number of DOM elements will affect performance; you should avoid
+  triggering layout wherever possible.
+- Assess layout model performance; new Flexbox is typically faster than
+  float-based layout models.
+- Avoid forced synchronous layouts and layout thrashing; read style values then
+  make style changes.
+
+**Reflow** is the web browser process for re-calculating the positions and
+geometries of elements in the document.
+
+What can trigger reflow:
+- resizing the browser window
+- scrolling
+- using JavaScript methods involving computed styles
+- adding or removing elements from the DOM, and changing an element's classes
+- etc...
+
+Reflow only has a *cost* if the document has changed and *invalidated* the layout.
+Something *Invalidates* + Something *Triggers* = **Costly Reflow**
+
+To minimize reflow:
+- Reduce unnecessary DOM depth. Changes at one level in the DOM tree can cause
+  changes at every level of the tree - all the way up to the root, and all the
+  way down into the children of the modified node.
+- Minimize CSS rules, remove unused CSS rules and update classes low in the DOM
+  tree
+- If you make complex rendering changes such as animations, do so out of the
+  flow. Use position-absolute or position-fixed to accomplish this.
+- Don't change styles by multiple statements
+- Batch DOM changes:
+    - Use a `documentFragment` to hold temp changes
+    - Clone, update, replace the node
+    - Hide the element with `display: none`
+- Don't ask for computed styles repeatedly, cache them into variable
+
+
+DOM/CSSOM modification → dirty tree: ideally, recalculated once, immediately
+prior to paint, except you can force a *synchronous* layout (vary bad)!
+First iteration marks tree as dirty, second iteration forces layout:
+```javascript
+  for (n in nodes) {
+    n.style.left = n.offsetLeft + 1 + "px";
+  }
+```
+Changing any property apart from `transform` and `opacity` always triggers painting.
+
+Paint process has variable costs based on:
+- Total area that needs to be (re)painted: we want to update the minimal amount
+- Pixel rendering cost varies based on applied effects: some styles are more
+  expensive than others
+
+Paint process in a nutshell - Given layout information of all elements:
+- Apply all the visual styles to each element
+- Composite all the elements and layers into a bitmap
+- Push the pixels to the screen
+
+Paint process has variable costs based on:
+- Total area that needs to be (re)painted (We want to update the minimal
+  amount)
+- Pixel rendering cost varies based on applied effects (Some styles are more
+  expensive than others)
+
+Rendering:
+- Viewport is split into rectangular tiles - each tile is rendered and cached
+- Elements can have own layers - allows reuse of same texture; layers can be
+  composited by GPU
+
+Reduce complexity!
+<br>
+<br>
+
+## Layout thrashing
+**Layout Thrashing** is where a web browser has to reflow or repaint a web page
+many times before the page is 'loaded'.
+
+Depending on the number of reflows and the complexity of the web page, there is
+potential to cause significant delay when loading the page, especially on lower
+powered devices such as mobile phones.
+
+When the DOM is written to, layout is **'invalidated'**, and at some point needs to
+be reflowed.
+
+Web browsers try to minimize the work by putting operations that require a
+reflow into a queue to execute at some point in the future. When required, the
+browser will execute everything in the queue as a single reflow. But sometimes
+we don't allow the browser to be lazy. If our script requests style information
+such as `offsetWidth` or `scrollTop`, the only way that the browser can be sure
+to return the correct answer is to execute any reflow operations that are in
+the queue.  This means that whenever we request some layout information, we
+could potentially be forcing a page reflow.
+
+If we ask for a geometric value back from the DOM before the current operation
+(or frame) is complete, the browser has to perform layout early, this is known
+as **forced synchonous layout**.
+
+*To prevent*: write your JavaScript in such a way that the number of times the
+page has to be reflowed is minimised.
+<br>
+<br>
+
+## Performance measurement and profiling
+Use an Incognito window when profiling code.
+
+<br>
+<br>
+
+## RAIL Model
+**RAIL**, an acronym for Response, Animation, Idle, and Load, is a performance
+model originated by the Google Chrome team in 2015, focused on user experience
+and performance within the browser. The performance mantra of RAIL is "Focus on
+the user; the end goal isn't to make your site perform fast on any specific
+device, it's to make users happy."
+
+**Respond** to users immediately, acknowledging any user input in 100ms or less.
+
+When **animating** or scrolling, render each frame in under 16ms, aiming for
+consistency and avoiding jank.
+
+When using the main JavaScript thread, work in chunks for less than 50ms to
+free up the thread for user interactions(**Idle**).
+
+Deliver interactive content in less than 1(5?) second(**Load**).
+
+The RAIL model is ultimately just one way of thinking about web performance.
+Putting the user in the center of performance.
+
+We don't want to have a quick loading page that then goes unresponsive. We also
+don't want a responsive page that takes forever to load. Rather all of these
+aspects have an important place in the performance conversation, and RAIL
+reminds us of that.
+
+Tips for using the RAIL model:
+1. Know your audience
+2. Keep up with web development trends
+3. Know when to upgrade
+4. Prioritize your critical rendering path
+5. Identify solutions, not just problems
+<br>
+<br>
+
+
+
+
+
+
+--------------------
+
 
 
 

@@ -1,5 +1,5 @@
-CONTENT
-- [COMMUNICATION PROTOCOLS]
+# CONTENT
+- [COMMUNICATION PROTOCOLS](#communication-protocols)
     - [TCP/TSL/UDP](#tsptsludp)
     - [HTTPS Purpose](#https-purpose)
     - [HTTP vs HTTP 2.0 Advantages](#http-vs-http-2.0-advantages)
@@ -23,6 +23,14 @@ CONTENT
    - [Layout thrashing](#layout-thrashing)
    - [Performance measurement and profiling](#performance-measurement-and-profiling)
    - [RAIL Model](#rail-model)
+   - [PRPL pattern](#prpl-pattern)
+   - [Network optimizations](#network-optimizations)
+   - [CPU bound operations optimizations](#cpu-bound-operations-optimizations)
+   - [Web Workers](#web-workers)
+   - [Service Workers](#service-workers)
+   - [Memory leaks detection](#memory-leaks-detection)
+   - [V8 hidden classes and inline caching techniques](#v8-hidden-classes-and-inline-caching-techniques)
+   - [Event Loop, microtasks](#event-loop-microtasks)
 
 
 # COMMUNICATION PROTOCOLS
@@ -44,6 +52,9 @@ HTTP 2.0 in a nutshell:
 **HTTP server push** server can push multiple resources in response to one
 request. Client can cancel stream if it doesn't want the resource. Resource
 goes into browsers cache. "Inlining" is a variant of "Server Push".
+<br>
+[Back to top](#content)
+<br>
 
 # SECURITY BASICS
 
@@ -767,6 +778,7 @@ running.
   params, etc) are sent within the request.  
 - *Cache Control*: indicates the preferences for caching the page output.   
 <br>
+[Back to top](#content)
 <br>
 
 # PERFORMANCE OPTIMIZATIONS
@@ -790,7 +802,7 @@ will have to parse it completely before rendering the page, and that's why
 **CSS is** said to be **render blocking**. If it's a *script*, the browser has
 to: stop parsing, download the script, and run it. Only after that can it
 continue parsing, because JavaScript programs can alter the contents of a web
-page (HTML, in particular). And that's why **JS is** called **parser blocking**.
+page (HTML, in particular). And that's why **JS** is called **parser blocking**.
 This why, if we have a JavaScript file that references elements within the
 document, it must be placed after the appearance of that document.
 
@@ -821,7 +833,8 @@ path. To further improve the process, you can also make some of the styles
 inlined. This saves us at least one roundtrip to the server that would have
 otherwise been required to get the stylesheet.
 
-**Performance Optimization Strategies**:
+**Performance Optimization Strategies**(The main is to minimize the amount of
+resources that have to be processed):
 1. Optimize your networking stack: reduce DNS lookups, avoid redirects, fewer
    HTTP requests, use CDN
 2. Minimizing the amount of data to be transferred over the wire:
@@ -833,6 +846,8 @@ otherwise been required to get the stylesheet.
 4. Inline just the required resources for above the fold
 5. Defer the rest until after the above the fold is visible
 6. Lazy load / defer images and defer / async JS
+7. Improve user perception with layout placeholders
+8. Use deferential serving: separate bundles for different browsers/users.
 
 **Tools to help**:
 - Identify critical CSS via Chrome DevTools(Timeline)
@@ -852,10 +867,15 @@ might not make it in time for the repaint, and it's going to be delayed to the
 next cycle. This is bad because we lose one frame, and in the next the
 animation is performed 2 times.
 
-`requestAnimationFrame` is an API that passes the responsibility of scheduling
-animation drawing directly to the browser. It will signal to the browser that a
-script-based animation needs to be resampled by enqueuing a **callback** to the
-**animation frame request callback list**.
+`requestAnimationFrame` method tells the browser that you wish to perform an
+animation and requests that the browser calls a specified function to update an
+animation before the next repaint(it will be called before each frame). It will
+signal to the browser that a script-based animation needs to be resampled by
+enqueuing a **callback** to the **animation frame request callback list**.
+
+Any rAFs queued **in event handlers** will be executed in the same frame
+(multiple callback -> one frame).
+Any rAFs queued **in a rAF** will be executed in the next frame.
 
 Why better?
 - The browser can optimize it, so animations will be smoother
@@ -866,11 +886,12 @@ Why better?
 - More battery-friendly
 
 `requestAnimationFrame` does not:
-- Guarantee when it'll paint; only that it'll paint when needed.
+- Guarantee when it'll paint; only that it'll paint when needed(frame could be
+  skipped).
 - Guarantee the synchronicity of the animations. For example, if you start two
-animations at the same time but then one of the animations is in an area that
-is visible and the other is not, the first animation will go on playing while
-the other will not.
+  animations at the same time but then one of the animations is in an area that
+  is visible and the other is not, the first animation will go on playing while
+  the other will not.
 - Paint until the callback function has finished executing, even if you try to
   trigger a reflow mid-callback by using any of the methods that would trigger
   a reflow and repaint in normal conditions, like `getComputedStyle()`
@@ -1041,6 +1062,9 @@ Paint process has variable costs based on:
 - Pixel rendering cost varies based on applied effects (Some styles are more
   expensive than others)
 
+**Compositing** is a process that ensures that layers of your website are drawn in
+the correct order.
+
 Rendering:
 - Viewport is split into rectangular tiles - each tile is rendered and cached
 - Elements can have own layers - allows reuse of same texture; layers can be
@@ -1080,8 +1104,84 @@ page has to be reflowed is minimised.
 <br>
 
 ## Performance measurement and profiling
-Use an Incognito window when profiling code.
+*Why Profiling?*
+As the project evolve more code and logic is added to the frontend, and you might
+start experiencing some slowdown. This is fine since you cannot predict every
+possible outcome of the code you added. Also, piled up features and legacy code
+can prove problematic after some time if they are not taken care of along the
+way.
 
+We could decide that optimization is needed besides of our experience is tools,
+e.g. Lighthouse.
+
+**Page Speed** online service is helpful to test performance relative to
+average environment and not for our current that could be far more performant
+and phisicaly close to the server.
+
+Use an Incognito window when profiling code.
+Analyze the optimized(production) version.
+
+Chrome's Network Waterfall.
+
+CPU/Network Throttling.
+Recording Performance.
+
+Analyze frames per second in the result, CPU and Network charts.
+
+Find the bottleneck.
+
+webpack-bundle-analyzer
+
+**First contentful paint** metric measures the time from when the page starts
+loading to when any part of the page's content is rendered on the screen. For
+this metric, "content" refers to text, images (including background images),
+`<svg>` elements, or non-white `<canvas>` elements.
+The first contentful paint depends on network speed and file size — caching
+essential files and reducing their complexity will improve the contentful paint
+performance.
+
+**First meaningful paint**(FMP is deprecated in Lighthouse 6.0) measures the
+time it takes the browser to display the page's primary content (normally the
+largest visible element). This is the point that the page becomes useful to the
+user; they can see the layout and begin reading content.
+First meaningful paint times can be improved similarly to first contentful
+paint times; reducing files size, complexity, optimize the critical rendering
+path.
+
+**Largest Contentful Paint** is the metric that measures the time a website takes
+to show the user the largest content on the screen, complete and ready for
+interaction. What is measured is the largest image or block of context within
+the user viewport. Anything that extends beyond the screen does not count.
+
+**Speed index** is a measure of how fast the websites DOM gets rendered.
+Speed index is not equivalent to load time since images haven't necessarily
+finished downloading.
+
+**First CPU idle** (also called **First Interactive**) measures the time until the
+page is capable of handling the majority of user inputs in a “reasonable”
+amount of time.
+
+**Time to Interactive** measures the time until the user can meaningfully
+interact with the majority of the site with delays of under 50ms. Unlike the
+‘CPU idle’ metric, Time to Interactive (TTI) requires the First contentful
+paint to have finished and most of the Javascript event listeners to have been
+registered.
+
+Lighthouse for audit.
+Lighthouse analyzes web apps and web pages, collecting modern performance
+metrics and insights on developer best practices.
+
+Lighthouse measures:
+- *Performance* — how fast is your website?
+- *Accessibility* — how accessible is your website to others?
+- *Best Practices* — are you following the web’s best practices?
+- *SEO* — is your website SEO friendly?
+- *Progressive Web App* — is your website a PWA?
+
+You can set up Lighthouse to run in your continuous integration (CI) by
+following the instructions on its GitHub repo. Then, you can set it up to show
+up in GitHub’s pull request as a status check and block any future changes that
+might jeopardize the performance of your website.
 <br>
 <br>
 
@@ -1110,21 +1210,379 @@ don't want a responsive page that takes forever to load. Rather all of these
 aspects have an important place in the performance conversation, and RAIL
 reminds us of that.
 
+If we have not enough resources/time for now to improve our performance without
+refactoring/redesign we could use a loaders and placeholders/skeletons
+approach.
+
 Tips for using the RAIL model:
 1. Know your audience
 2. Keep up with web development trends
 3. Know when to upgrade
 4. Prioritize your critical rendering path
-5. Identify solutions, not just problems
+
 <br>
 <br>
 
+## PRPL pattern
+**PRPL** is an acronym for:
+- **Push** (or preload) the most important resources: `rel="preload"` or
+  `rel="prefetch"`
+- **Render** the initial route as soon as possible: inlining, SSR (hydrate)
+- **Pre-cache** remaining assets
+- **Lazy load** other routes and non-critical assets
 
+PRPL aims to facilitate a faster web experience by using Service Workers,
+Background sync, Cache API, Priority hints, and pre-fetching.
+Specifically, PRPL works for phones with a low network when the phone is
+offline or in data-saver mode (PWAs).
 
+[Pre-cache strategies](#service-workers)
 
+*Lazy loading* optimizes resources consumption and response time by code
+splitting and loading the desired bundle.
+<br>
+<br>
 
+## Network optimizations
+**Minification**(js, css, html) and **module bundling**.
 
+Minification is the process of processing source-code to remove all unnecessary
+characters without changing functionality.
+
+Module bundling deals with taking different scripts and bundling them together.
+
+Lazy loading of assets
+
+Remove unused code from your dependencies(Tree Shaking)
+
+Use the Critical CSS approach
+
+Preload, prefetch 
+
+Cache
+
+HTTP/2
+
+Content Delivery Network (CDN) to Reduce Latency:
+Since many of the files unchanging and static, a CDN is a great way to enhance
+bandwidth, speed up your delivery of assets, and reduce access latency. In a
+CDN, different network nodes spread far apart from each other store copies of
+data and work together to fulfill end-user content requests as they occur.
+
+Compressing - gzip, brotli.
+Brotli's advantage: with the same CPU load, it compresses 20–30% better than Gzip.
+Brotli's disadvantage: it's relatively new and is supported worse than Gzip. 
+
+Optimize Images:
+- Choose an appropriate format(svg, jpg, png, webp and gif)
+- decreasing dimensions
+- Compression(svg - minify & simplify, jpeg - compression level)
+- Use Progressive JPEG / Interlaced PNG
+
+For **fonts**
+— Specify the proper fallback font (and a generic font family)
+— Use `font-display` to configure how the custom font is applied
+<br>
+<br>
+
+## CPU bound operations optimizations
+A program is **CPU bound** if it would go faster if the CPU were faster, i.e. it
+spends the majority of its time simply using the CPU (doing calculations).
+
+Use Asynchronous Code to Prevent Thread Blocking
+
+Minimize DOM access
+
+Store pointer references to in-browser objects
+
+Batch your DOM changes
+
+Event Delegation (Not all events bubble up, The child stops propagation)
+
+Use the algorithms with the least computational complexity to solve the task
+with the optimal data structures
+
+Break Out of Loops Early
+
+Define variables locally: **scope lookup** - with the increase in the number of
+scopes in the scope chain, there’s also an increase in the amount of time taken
+to access variables that are outside the current scope.
+
+Memoization
+
+Use Throttle and Debounce
+
+Inline Caching: JS engine relies upon the observation that repeated calls to
+the same method tend to occur on the same type of object.
+
+Hidden Classes: Hidden classes are what the compiler uses under the hood to say
+that these 2 objects have the same properties. If values are introduced in a
+different order than it was set up in, the compiler can get confused and think
+they don't have a shared hidden class, they are 2 different things, and will
+slow down the computation. Also, the reason the delete keyword shouldn't be
+used is because it would change the hidden class.
+
+Use Web Workers to Run CPU Intensive Tasks in the Background
+<br>
+<br>
+
+## Web Workers
+
+Web Workers allow you to perform multi-threading in your Web applications.
+
+Web Workers are scripts initiated from the JavaScript code in your application
+and execute on a thread separate from that of your application. Any
+communication between a Web Worker and your application occurs through events.
+
+Inability to access the DOM.
+
+You can't access your framework's features from a Web Worker because you don't
+have access to its libraries; remember, they're loaded by your application and
+the Web Worker sits by itself in an isolated script file, running in an
+isolated context.
+
+The window namespace is not accessible from a Web Worker but the concept of it
+is, in a way. The global scope concept exists in a Web Worker by way of the
+`self` object, although optional to use.
+
+Security
+- Restrictions with Local Access
+- Same Origin Considerations
+
+Use cases:
+- Prefetching and/or caching data for later use
+- Network requests and resulting data processing
+- Code syntax highlighting or other real-time text formatting, spell checker,
+  encoding/decoding a large string
+- Complex mathematical calculations
+- Analyzing or processing video or audio data
+- Background I/O or polling of webservices
+- Processing large arrays or huge JSON responses
+- Image manipulation, filtering in `<canvas>`
+- Calculations and data manipulation on local storage 
+<br>
+<br>
+
+## Service Workers
+**Service workers** essentially act as proxy servers that sit between web
+applications, the browser, and the network (when available). They are intended,
+among other things, to enable the creation of effective offline experiences,
+intercept network requests and take appropriate action based on whether the
+network is available, and update assets residing on the server. They will also
+allow access to push notifications and background sync APIs.
+
+A service worker is an event-driven worker registered against an origin and a
+path. It takes the form of a JavaScript file that can control the web-page/site
+that it is associated with, intercepting and modifying navigation and resource
+requests, and caching resources in a very granular fashion to give you complete
+control over how your app behaves in certain situations (the most obvious one
+being when the network is not available).
+
+A service worker is run in a worker context: it therefore has no DOM access,
+and runs on a different thread to the main JavaScript. It is designed to be
+fully async.
+
+Browser support.
+
+Service workers only run over HTTPS, for security reasons.
+
+Lifecycle
+- Download
+- Install
+- Activate
+
+Pre-caching in service workers strategies:
+- *Stale-while-revalidate*: checks for the response in the cache. If it is
+  available, it is delivered, and the cache is revalidated. If it is not
+  available, the service worker fetches the response from the network and
+  caches it.
+- *Cache first*: looks for a response in the cache first. If any response is
+  found previously cached, it will return and serve the cache. If not, it will
+  fetch the response from the network, serve it, and cache it for next time.
+- *Network first*: tries to fetch the response from the network. If it
+  succeeds, it will cache the response and return the response. If the network
+  fails, it will fall back to the cache and serve the response there.
+- *Cache only*: responds from the cache only. It does not fall back to the
+  network.
+- *Network only*: uses the network solely to fetch and serve a response. It
+  does not fallback to any cache.
+
+Advantages:
+- make the website function offline,
+- increase online performance by reducing network requests for certain assets,
+- provide a customized offline fallback experience.
+
+Service workers use cases:
+- Background data synchronization.
+- Responding to resource requests from other origins.
+- Receiving centralized updates to expensive-to-calculate data such as
+  geolocation or gyroscope, so multiple pages can make use of one set of data.
+- Client-side compiling and dependency management of CoffeeScript, less,
+  CJS/AMD modules, etc. for development purposes.
+- Hooks for background services.
+- Custom templating based on certain URL patterns.
+- Performance enhancements, for example pre-fetching resources that the user is
+  likely to need in the near future, such as the next few pictures in a photo
+  album.
+<br>
+<br>
+
+## Memory leaks detection
+**Memory leaks** can be defined as memory that is not required by an
+application anymore that for some reason is not returned to the operating
+system or the pool of free memory.
+
+The primary symptom of a memory leak is when the performance of an application
+progressively worsens.
+
+JavaScript is a garbage collected language. Garbage collected languages help
+developers manage memory by periodically checking which previously allocated
+pieces of memory can still be "reached" from other parts of the application.
+
+Garbage collected languages reduce the problem of managing memory from "what
+memory is still required?" to "what memory can still be reached from other
+parts of the application?". The difference is subtle, but important: while only
+the developer knows whether a piece of allocated memory will be required in the
+future, unreachable memory can be algorithmically determined and marked for
+return to the OS.
+
+The main cause for leaks in garbage collected languages are **unwanted references**.
+
+The Types of Common JavaScript Leaks
+1. Accidental global variables: a reference to an undeclared variable creates a
+   new variable inside the *global* object; an accidental global variable can
+   be created is through `this`. As variable belongs to *global*(*window*)
+   object it could be collected by GC. To prevent - `use strict`. If you must
+   use a global variable to store lots of data, make sure to null it or
+   reassign it after you are done with it. 
+
+2. Forgotten timers or callbacks/event listeners: timers that make reference to
+   nodes or data that is no longer required.
+
+3. Out of DOM references (including inner and leaf nodes)
+
+4. Closures: once a scope is created for closures that are in the same parent
+   scope, that scope is shared.
+
+Garbage Collector trade-off is nondeterminism (unpredictable when it happens):
+when it starts it could slow the application performing.
+GC starts from *window* object, and traverses the whole tree down to find
+unreachable pointers. First step - mark to delete, second one - perform
+deletion.
+
+In JavaScript ES6, Map and Set were introduced with their “weaker” siblings.
+This “weaker” counterpart known as WeakMap and WeakSet hold “weak” references
+to objects. They enable unreferenced values to be garbage collected and thereby
+prevent memory leaks.
+
+Tools:
+- Chrome Task Manager
+- Pega JS Memory Leak Detector
+- Chrome Develop Tools: Memory/Heap snapshots comparison
+
+To perform:
+1. Find out how much memory your page is currently using with the Chrome Task
+   Manager.
+2. Visualize memory usage over time with Timeline recordings(could get a simple
+   overview for leaks, when see that memory is not collected by GC).
+3. Identify detached DOM trees (a common cause of memory leaks) with Heap
+   Snapshots.
+4. Find out when new memory is being allocated in your JS heap with Allocation
+   Timeline recordings.
+<br>
+<br>
+
+## V8 hidden classes and inline caching techniques
+**Hidden classes** are the academic term for generating similar shapes of
+JavaScript code.
+Javascript engines generate shapes of each object that you create. If you
+create similar objects, they share the same shape (Hidden class, Map,
+Structure, etc.).
+
+Takeaways for hidden classes:
+- Initialize all object members in constructor functions: Adding properties to
+  an object after instantiation will force a hidden class change and slow down
+  any methods that were optimized for the previous hidden class.
+- Always initialize object members in the same order.
+
+**Inline caching** is an optimization technique that relies upon the
+observation that repeated calls to the same method tend to occur on the same
+type of object. You can think of Inline Cache as a fast path (shortcut) to the
+value/property.
+
+Whenever a function is called, V8 looks up the hidden class for that specific
+object. If the method on that object or an object with the same hidden class is
+called multiple times, V8 caches the information where to find the object
+property in memory and returns it instead of looking up the memory itself.
+
+Takeaways for inline caching
+- keep the type of parameters safe and don't mix them up (call with same type
+  of objects).
+- always initialize object members in the same order.
+- code that executes the same method repeatedly will run faster than code that
+  executes many different methods only once.
+
+Avoid **sparse arrays** where keys are not incremental numbers.
+<br>
+<br>
+
+## Event Loop, microtasks
+JavaScript is a *single-threaded* programming language.
+
+JavaScript engine executes a script from the top and works its way down
+creating execution contexts and pushing and popping functions onto and off the
+call stack.
+
+The V8 does two major things:
+- Heap memory allocation
+- Call stack execution context
+
+However, it's more precise to say that the JavaScript runtime can do one thing at a time.
+
+The web browser also has other components, not just the JavaScript engine.
+Events, timers, Ajax requests are all provided on the client-side by the
+browsers and are often referred to as Web API. They are the ones that allow the
+single-threaded JavaScript to be non-blocking, concurrent, and asynchronous.
+
+There are three major sections to the execution workflow of any JavaScript
+program, the **call stack**, the **web API**, and the **Task queue**.
+
+When the Call Stack encounters a web API function, the process is immediately
+handed over to the Web API, where it is being executed and freeing the Call
+Stack to perform other operations during its execution.
+
+Once the Web API finishes executing the task, it doesn't just push it back to
+the Call Stack automatically. It goes to the Task Queue or Callback Queue.
+
+A **queue** is a data structure that works on the First in First out principle.
+
+The **event loop** is a constantly running process that monitors both the
+callback queue and the call stack.
+
+Once the Stack is clear, the event loop triggers and checks the Task Queue for
+available callbacks. If there are any, it pushes it to the Call Stack, waits
+for the Call Stack to be clear again, and repeats the same process.
+
+Each 'thread' gets its own event loop, so each web worker gets its own, so it
+can execute independently, whereas all windows on the same origin share an
+event loop as they can synchronously communicate.
+
+The **task** (**macrotask**) is code to be executed until completion. For each
+turn of the event loop, one task is executed. A task can schedule other tasks
+(asynchronous in nature).
+Task sources are - DOM Manipulation, UI Events, History Traversal, Networking.
+
+**Microtask** is code that needs to be executed after the currently executing task
+is completed. If microtask's queue is not empty no macrotask would be performed
+and we should be careful to not overflow the queue.
+Microtask sources are - `Promise.resolve,` `Promise.reject,` `MutationObservers,`
+`IntersectionObservers` etc.
+
+<br>
+[Back to top](#content)
+<br>
 --------------------
+
 
 
 

@@ -1,4 +1,9 @@
 # CONTENT
+- [PROGRAMMING PARADIGMS](#programming-paradigms)
+    - [OOP Principles, pros/cons](#oop-principles-proscons)
+    - [Functional Programming, pros/cons](#functional-programming-proscons)
+    - [FP vs OOP paradigms, composition over inheritance](#fp-vs-oop-paradigms-composition-over-inheritance)
+
 - [COMMUNICATION PROTOCOLS](#communication-protocols)
     - [TCP/TSL/UDP](#tsptsludp)
     - [HTTPS Purpose](#https-purpose)
@@ -31,6 +36,240 @@
    - [Memory leaks detection](#memory-leaks-detection)
    - [V8 hidden classes and inline caching techniques](#v8-hidden-classes-and-inline-caching-techniques)
    - [Event Loop, microtasks](#event-loop-microtasks)
+
+
+# PROGRAMMING PARADIGMS
+
+## OOP Principles, pros/cons
+**OOP** is a methodology to design a program using classes and objects and aims
+to implement real-world entities like(four basic concepts) inheritance,
+polymorphism, abstraction and encapsulation.
+The main aim of OOP is to **bind together the data and the functions that
+operate on them** so that no other part of the code can access this data except
+that function.
+
+**Object** - any entity that has state and behavior.
+
+**Class** - logical collection of objects.
+
+**Inheritance**: the capability of an object to derive properties and
+characteristics from another object. It provides code *reusability*. It is used
+to achieve runtime polymorphism.
+
+**Polymorphism**: If one task is performed in different ways. We could use method
+*overloading* and method *overriding* to achieve polymorphism. Example can be to
+speak something; for example, a cat speaks meow, dog barks woof, etc.
+
+**Abstraction**: hiding internal details and showing functionality. It reduce
+complexity and increase efficiency. We could use *abstract class* and *interface*
+to achieve abstraction.  Overall, abstraction helps isolate the impact of
+changes made to the code so that if something goes wrong, the change will only
+affect the variables shown and not the outside code.
+
+**Encapsulation**: binding (or wrapping) code and data together into a single unit
+that keeps both safe from outside interference and misuse.
+
+It provides: 
+- Security - controlled access 
+- Hide Implementation and Expose Behaviours(ease to support)
+- Loose Coupling - modify the implementation at any time
+- Better maintenance
+
+OPP +/- (over procedural programming):
+- +provides a clear structure for programs 
+- +program easier to read and understand 
+- +it allows for the parallel development 
+- +reusability (via inheritance), scalability, decomposition
+- +It offers flexibility through polymorphism
+- +security - protects information through encapsulation.
+- -more complex structure of a program(переусложнение)
+- -everything should be an object (все строется на объектах)
+- -trouble with shared state, different things competing for the same resources 
+- -OOP codebase can be extremely resistant to change: the relation among all
+  the available classes become artificial 
+- -problems with multithreading, data management, and mutability if not done right.
+
+# Functional programming, pros/cons
+**Functional programming** is **declarative** rather than **imperative** (what
+to do, rather than how to do it), and application *state flows through pure
+functions*.
+Contrast with object oriented programming, where application state is usually
+shared and colocated with methods in objects.
+
+Functional programming is a programming paradigm based on some fundamental
+principles:
+
+- Pure functions
+- Function composition
+- Avoid shared state
+- Avoid mutating state
+- Avoid side effects
+
+A **pure function** is a function that has no side-effects and given the same
+inputs, always returns the same output: they are *predictable*, *independent*
+(do not use values in surrounding environment), so it helps with memoization as
+we can save the result and return it when necessary.
+
+A **side effect** is any application state change that is observable outside
+the called function other than its return value.
+
+One of pure function properties is **referential transparency**: you can
+replace a function call with its resulting value without changing the meaning
+of the program.
+
+**Function composition** is the process of combining two or more functions in
+order to produce a new function or perform some computation.
+
+**Shared state** is any variable, object, or memory space that exists in a
+shared scope, or as the property of an object being passed between scopes. A
+shared scope can include global scope or closure scopes. Often, in object
+oriented programming, objects are shared between scopes by adding properties to
+other objects.
+
+An **immutable object** is an object that can't be modified after it's created.
+
+Immutability Pros:
+- Easier to write, use and *reason about* the code
+- *Predictable State*: Object once created cannot be modified
+- As there are no side effects so *testing* becomes *easy*
+- *Thread safety*: Immutable objects are useful in multi-threaded applications
+  because multiple threads can act on the data of immutable objects without
+  worrying about changes to the data by other threads.
+- *Comparing* two immutable objects are very *cheap* operation. One can simply
+  compare the objects address and then tell whether they are equal or not.
+
+Immutability Cons:
+- *performance impact*: Immutability works fine with primitive object. In case
+  of non-primitive data structure like array it becomes overhead to copy data
+  from one location to another location. There is not full proof solution for
+  this but we can implement a strategy called “structural sharing”, which
+  yields much less memory overhead than expected.
+
+In many functional programming languages, there are special immutable data
+structures called **trie data structures** (pronounced “tree”) which are
+effectively *deep frozen* — meaning that no property can change, regardless of
+the level of the property in the object hierarchy.
+
+**First-Class Citizen** Functions: when function are treated like any other
+variable.
+
+**Recursion** is a way of solving problems via the smaller versions of the same
+problem. We solve the problem via the smaller sub-problems till we reach the
+trivial version of the problem i.e. base case. In other words, a recursive
+function is a function that *calls itself* until a "*base condition*" is true,
+and execution stops.
+The recursive function has two parts: *Base Case* and *Recursive Structure*.
+
+Why we need Recursion?
+- it  breaks problems into smaller, independent sub problems(*Divide and Conque*),
+  which substantially makes it easier to parallelize
+
+**Disadvantage**: *Stack Overflow* problem; if performance is vital, use loops instead.
+
+A **higher-order function** is a function that gets a function as an argument.
+It may or may not return a function as its resulting output.
+
+**Currying** is the process of taking a function that accepts `n` arguments and
+turning it into `n` functions that each accepts a single argument. Currying
+always returns another function with only one argument until all of the
+arguments have been applied. So, we just keep calling the returned function
+until we've exhausted all the arguments and the final value gets returned.
+
+**Partial application** is a more generalized version of currying. It is any
+function that takes a function with multiple parameters and returns one with
+fewer parameters (`.bind` in JS).
+
+Both partial application and currying are related to the ways we invoke
+functions — specifically, functions that have more than one parameter. They
+allow us to call those functions providing just some of the arguments, leaving
+the rest "*for later*".
+
+The concept of *pipe* is simple — it combines `n` functions. It's a pipe flowing
+left-to-right, calling each function with the output of the last one.
+The main difference between *compose* and *pipe* is the order of the composition.
+Compose performs a right-to-left function composition.
+
+**FP Cons**: Over exploitation of FP features such as point-free style and
+large compositions can potentially reduce readability because the resulting
+code is often more abstractly specified, more terse, and less concrete.
+
+## FP vs OOP paradigms, composition over inheritance
+
+Difference base on key criteria
+
+| Criteria      |           FP                             |           OOP                                     |
+|---------------|------------------------------------------|---------------------------------------------------|
+| Definition    | focus on function evaluation             | focus on the concept of objects                   |
+| Data          | uses immutable data                      | uses the mutable data                             |
+| Model         | follows a declarative programming model  | follows an imperative programming model           |
+| Support       | supports parallel programming            | doesn't support parallel programming              |
+| Execution     | statements can be excecuted in any order | statements should be executed in particular order |
+| Iteration     | uses recursion                           | uses loops                                        |
+| Basic element | functions & variables                    | objects & methods                                 |
+
+**Inheritance** is a technique we can use to create derived classes that borrow
+everything from their parents, except private properties and methods.
+Another benefit from the inheritance, mainly on strongly typed languages such
+as JAVA, TypeScript, is that variables declared with the type of your parent
+class can hold objects from its child classes as well.
+
+**Composition** is creating small reusable functions to make code *modular* and
+it allows us to model a **has one** relationship between objects. This in turn,
+helps to *encapsulate* state and behavior inside a component and then use that
+component from other classes, formally known as composite.
+The point of a *component-based approach* is that you can now easily maintain
+and modify the code for any of them without affecting the main classes or their
+code. These type of relationship is called **loosely coupled**.
+
+**Which one is better then?**
+One of the drawbacks to inheritance is that it is based on the fact that it
+won't change. We create a class and give it properties and methods that
+describe the class. But say, down the road, we need to update that class and
+add more functionality. Adding a new method to the base class will create
+rippling effects through your entire program.
+This is the **tight coupling problem**, things having to depend on one another,
+which leads to the **fragile base class problem**, seemingly safe changes cause
+unforeseen repercussions. It is the opposite of small reusable code. Changing
+one small thing in either of the class or subclasses could break the program.
+Another problem is **hierarchy** where you may need to create a subclass that
+can only do 1 part of the class, but instead you get everything passed down to
+it.
+Composition creates a more stable environment that is easier to change in the
+future. The key is to decide which structure is better for your project. You
+can use ideas from both of these styles to write your code.
+
+**The case for Inheritance**:
+Inheritance makes sense because we tend to relate OOP concepts to real-world
+objects and then we try to generalize their behavior by generalizing their
+nature.  In other words, we don't think of a cat and a doc as having 4 legs and
+a set of organs that allow them to either bark or meow. We think of them as
+animals, which translates to inheritance.  And because of that, the ideal use
+case for going with inheritance is having 80% of your code being common between
+two or more classes and at the same time, having the specific code being very
+different. Not only that, but having the certainty that there is no case where
+you'd need to swap the specific code with each other. Then inheritance is
+definitely the way to go, with it you'll have a simpler internal architecture
+and less code to think about.
+
+**The case for composition**:
+The generic code can be abstracted into different components, which in turn can
+be as complex as they need (as long as they keep their public interface the
+same) and that we can swap them during runtime, which is very flexible.
+The other great benefit I see is that while with inheritance, if you need to
+create a new specific class (like adding a `Lion` class now), you'd have to
+understand the code of the `FourLeggedAnimal` class to make sure you now what
+you're getting from it. And this would be just so that you can implement a
+different version of the `speak` method. However, if you went with composition,
+all you’d have to do is create a new class implementing the new logic for the
+speak method, unaware of anything else, and that's it.
+Of course, withing the context of this example, the extra cognitive load of
+reading a very simple class might seem irrelevant, however, consider a
+real-world scenario where you'd have to go through hundreds of lines of code
+just to make sure you understand a base class. That's definitely not ideal.
+
+- Use Inheritance when the relationship is “X is of Y type”.
+- Use Composition when the relationship is “X has a Y capability”.
+
 
 
 # COMMUNICATION PROTOCOLS

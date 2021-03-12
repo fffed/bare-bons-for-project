@@ -3,9 +3,9 @@
     - [OOP Principles, pros/cons](#oop-principles-proscons)
     - [Functional Programming, pros/cons](#functional-programming-proscons)
     - [FP vs OOP paradigms, composition over inheritance](#fp-vs-oop-paradigms-composition-over-inheritance)
-
+    - [Reactive programming, pros/cons](#reactive-programming-proscons)
 - [COMMUNICATION PROTOCOLS](#communication-protocols)
-    - [TCP/TSL/UDP](#tsptsludp)
+    - [TCP/TLS/UDP](#tsptlsudp)
     - [HTTPS Purpose](#https-purpose)
     - [HTTP vs HTTP 2.0 Advantages](#http-vs-http-2.0-advantages)
 - [SECURITY BASICS](#security-basics)
@@ -36,7 +36,11 @@
    - [Memory leaks detection](#memory-leaks-detection)
    - [V8 hidden classes and inline caching techniques](#v8-hidden-classes-and-inline-caching-techniques)
    - [Event Loop, microtasks](#event-loop-microtasks)
-
+- [WEB APPLICATION DESIGN AND FRAMEWORK](#web-application-design-and-framework)
+   - [SPA vs MPA pros/cons](#spa-vs-mpa-proscons)
+   - [SSR vs CSR pros/cons](#ssr-vs-csr-proscons)
+   - [Micro-frontends vs monorepos](#micro-frontends-vs-monorepos)
+   - [PWA](#pwa)
 
 # PROGRAMMING PARADIGMS
 
@@ -270,13 +274,221 @@ just to make sure you understand a base class. That's definitely not ideal.
 - Use Inheritance when the relationship is “X is of Y type”.
 - Use Composition when the relationship is “X has a Y capability”.
 
+## Reactive programming, pros/cons
+**Reactive programming** is a declarative programming paradigm concerned with
+data streams and the propagation of change ("react" to changes that happen).
 
+For example, in an imperative programming setting, `a := b + c` would mean that
+`a` is being assigned the result of `b + c` in the instant the expression is
+evaluated, and later, the values of `b` and `c` can be changed with no effect
+on the value of `a`. On the other hand, in reactive programming, the value of
+`a` is automatically updated whenever the values of `b` or `c` change, without
+the program having to re-execute the statement `a := b + c` to determine the
+presently assigned value of `a`.
+
+The most common approaches to data propagation are:
+
+- **Pull**: The value consumer is in fact proactive, in that it regularly
+  queries the observed source for values and reacts whenever a relevant value
+  is available. This practice of regularly checking for events or value changes
+  is commonly referred to as **polling**.
+- **Push**: The value consumer receives a value from the source whenever the
+  value becomes available. These values are self-contained, e.g. they contain
+  all the necessary information, and no further information needs to be queried
+  by the consumer.
+- **Push-pull**: The value consumer receives a *change notification*, which is a
+  short description of the change, e.g. "some value changed" – this is the *push
+  part*. However, the notification does not contain all the necessary
+  information (viz. does not contain the actual values), so the consumer needs
+  to query the source for more information (the specific value) after it
+  receives the notification – this is the *pull part*. This method is commonly
+  used when there is a large volume of data that the consumers might be
+  potentially interested in. So in order to reduce throughput and latency, only
+  light-weight notifications are sent; and then those consumers which require
+  more information will request that specific information. This approach also
+  has the drawback that the source might be overwhelmed by many requests for
+  additional information after a notification is sent.
+
+RxJS is JavaScript library for transforming, composing and querying
+asynchronous streams of data. RxJS can be used both in the browser or in the
+server-side using Node.js.
+
+A **stream** is a sequence of ongoing events ordered in time. It can be anything
+like user inputs, button clicks or data structures. You can listen to a stream
+and react to it.
+Stream emit three things during its timeline, a *value*, an *error*, and *complete
+signal*.
+
+**Observables** (functions) provide support for passing messages between
+publishers and subscribers in your application.
+
+Observable -> Subscription <- Observer
+
+**Basic Merging**: Takes 2+ Observables and merges them into a single
+Observable. The merged observable is a subscriber of ALL of its merged sources.
+
+**Advantages of RP**:
+
+- Improves user experience: as it's asynchronous in nature
+- A lot simpler to do async/threaded work (via built-in methods)
+- Use resources efficiently (not blocking)
+
+**Disadvantages of RP**:
+
+- learning curve
+- More memory intensive: This can lead to memory leakage
+- hard to debug
+- time to start
+- data immutability required
+- managing concurrency
+- complexity of testing
+
+Suits for highly interactive UI, artificial intelligence, machine learning,
+real-time data streaming:
+
+- Social networks, chats
+- Games  
+- Audio and video apps
+<br>
+[Back to Top](#content)
+<br>
 
 # COMMUNICATION PROTOCOLS
 
-## TCP/TSL/UDP basics
+## TCP/TLS/UDP basics
+There are two types of Internet Protocol (IP) traffic:
+
+- Transmission Control Protocol: **TCP**  is connection oriented – means that the
+  communicating devices should establish a connection before transmitting data
+  and should close the connection after transmitting the data
+- User Datagram Protocol: **UDP** is the Datagram oriented and connectionless
+  protocol. There is no overhead for opening, maintaining and terminating a
+  connection. 
+
+A short example to understand the differences clearly:
+Suppose there are two houses, H1 and H2 and a letter have to be sent from H1 to
+H2. But there is a river in between those two houses. Now how can we send the
+letter?
+*Solution 1*: Make a bridge over the river and then it can it delivered (TCP).
+*Solution 2*: Get it delivered through a pigeon(UDP).
+
+TCP:
+
+- Web browsing, email and file transfer are common applications that make use of it
+- Is used to control segment size, rate of data exchange, flow control and
+  network congestion
+- Is preferred where error correction facilities are required at network
+  interface level
+
+UDP:
+
+- The delivery of data to the destination cannot be guaranteed
+- Has only the basic error checking mechanism using checksums
+- There is no retransmission of lost packets
+- There is no sequencing of data. If ordering is required, it has to be managed
+  by the application layer
+- Supports Broadcasting - sending to all on a network, and multicasting –
+  sending to all subscribers
+- Is used by DNS, DHCP, Trivial File Transfer Protocol(TFTP), SNMP, RIP, and
+  Voice over IP(VoIP).
+- Is suitable for applications that need fast, efficient transmission, such as
+  games. UDP's stateless nature is also useful for servers that answer small
+  queries from huge numbers of clients.
+- Streaming of data: Packets are sent individually and are checked for
+  integrity only if they arrive. Packets have definite boundaries which are
+  honored upon receipt, meaning a read operation at the receiver socket will
+  yield an entire message as it was originally sent.
+- Is largely used by time sensitive applications
+- Is faster, simpler and more efficient than TCP
+
+When the **SSL** protocol was standardized, it was renamed to **Transport Layer
+Security (TLS)**. Many use the TLS and SSL names interchangeably, but
+technically, they are different, since each describes a different version of
+the protocol.
+
+**TLS** was designed to operate on top of a reliable transport protocol such as
+TCP. However, it has also been adapted to run over UDP. The Datagram Transport
+Layer Security (DTLS) protocol is based on the TLS protocol and is able to
+provide similar security guarantees while preserving the datagram delivery
+model.
+
+The TLS protocol is designed to provide three essential services to all
+applications running above it: *encryption*, *authentication*, and *data integrity*.
+
+**Encryption**: A mechanism to obfuscate what is sent from one host to another.
+**Authentication**: A mechanism to verify the validity of provided identification
+material.
+**Integrity**: A mechanism to detect message tampering and forgery.
+
+Some performance-critical features, such as HTTP/2, explicitly require the use
+of TLS 1.2 or higher and will abort the connection otherwise.
+
+As part of the TLS handshake, the protocol also allows both peers to
+authenticate their identity. When used in the browser, this authentication
+mechanism allows the client to verify that the server is who it claims to be
+(e.g., your bank) and not someone simply pretending to be the destination by
+spoofing its name or IP address.
+
+Cryptographic hash function
+
+By enabling client and server applications to support TLS, it ensures that data
+transmitted between them is encrypted with secure algorithms and not viewable
+by third parties.
+
+Types of validation:
+
+- **Domain validation (DV)**: validates that a certificate owner controls a
+  given domain name. Such a basic validation technique is good enough for blogs
+  and websites that don't handle sensitive information, but isn't ideal for
+  those that do.
+- **Organization validation (OV)**
+- **Extended validation (EV)**
+
+If your website allows logins or payments, you should invest in a TLS
+certificate that offers *OV* or *EV*. These two types differ in
+the verification process with the EV being more strict.
+
+
 
 ## HTTPS Purpose
+Unencrypted communication—via HTTP and other protocols—creates a large number
+of privacy, security, and integrity vulnerabilities. Such exchanges are
+susceptible to interception, manipulation, and impersonation, and can reveal
+users credentials, history, identity, and other sensitive information. Our
+applications need to protect themselves, and our users, against these threats
+by delivering data over HTTPS.
+
+The purpose of HTTPS is to ensure the protection, integrity, and privacy of the
+data exchanged between a server and a client (usually a browser). It also
+authenticates websites and confirms its trustworthiness.
+
+HTTPS is an encrypted version of HTTP and:
+
+- HTTPS protects the **integrity** of the website (rewriting content, injecting
+  unwanted and malicious content)
+- HTTPS protects the **privacy** and security of the user
+- HTTPS enables powerful features on the web: accessing users geolocation,
+  taking pictures, recording video, enabling offline app experiences, and more,
+  require explicit user opt-in that, in turn, requires HTTPS
+
+A common objection and roadblock towards widespread adoption of HTTPS has been
+the requirement to purchase certificates from one of the trusted
+authorities—see Chain of Trust and Certificate Authorities. The Let’s Encrypt
+(free and open) project launched in 2015 solves this particular problem.
+
+
+The only way to enable HTTPS on your website is to get a TLS certificate and
+install it on your server. Transport Layer Security (TLS) is a cryptographic
+protocol designed to provide communications security over a computer network.
+
+Pretty much all the benefits of HTTPS tie back to SEO:
+- Lightweight ranking signal
+- Better security and privacy
+- Preserves referral data: If your website is still on HTTP and you’re using
+  web analytics services like Google Analytics, so no referral data is passed
+  from HTTPS to HTTP pages.
+- Enables the use of modern protocols that enhance security and site speed
+- Prevents Man-In-The-Middle Content Hijacking
 
 ## HTTP vs HTTP 2.0 Advantages
 
@@ -1816,6 +2028,380 @@ is completed. If microtask's queue is not empty no macrotask would be performed
 and we should be careful to not overflow the queue.
 Microtask sources are - `Promise.resolve,` `Promise.reject,` `MutationObservers,`
 `IntersectionObservers` etc.
+
+<br>
+[Back to top](#content)
+<br>
+
+# WEB APPLICATION DESIGN AND FRAMEWORK
+
+## SPA vs MPA pros/cons
+Websites that are built with single-page applications (**SPA**s) only consist of
+one single page and it does not reload during its use. Only data is sent
+back-and-forth, and the website executes everything within itself rather than
+going through servers every time.
+
+At the same time SPA can be slow due to client-side rendering. Before your
+browser can render the page, it has to load bulky JS frameworks.  This could
+take a while, especially for the large application. But after the first render,
+SPAs become much faster than MPAs.  Fortunately, there are ways to speed up the
+SPA initialization such as loading assets dynamically, minimizing the scripts,
+etc.
+
+Ideal for a company with a single product to get real-time experience without
+page refresh.
+
+Pros:
+
+- Decoupled Backend and Frontend
+- Sleek UX
+- Speed
+- Better suits for offline work
+- Can be easely adopted to mobile app
+- Super-simple to deploy: it's really just one index.html file, with a CSS
+  bundle and a Javascript bundle
+
+Cons: 
+
+- SEO (In the last couple of years, Google has become much better at indexing
+  JavaScript. Still, Google admits it sometimes can't properly index
+  single-page applications. Not to mention that other search engines haven't
+  yet achieved the same SPA-crawling prowess.)
+- JavaScript Dependency
+- Memory leaks 
+
+Multi-page applications (**MPA**s) are complex websites. Such website reloads
+the entire page whenever the user interacts with it. Each time that the data is
+exchanged, the application makes a request from the server to display different
+information in the browser.
+
+The main reason why it differs so much from the single-page applications, MPAs
+take time to execute the information exchanges, meaning that the user
+experience can be harmed if the servers connect slowly or the internet
+connection is poor.
+
+Ideal for a large company that offers a wide variety of products, if you need a
+lot of user interaction and technical features in your app, large e-commerce
+stores and marketplaces like eBay, huge web portals that have a lot of content
+(such as news portals) and require flawless SEO.
+
+Pros: 
+
+- Simple SEO
+- Fast launch 
+- Many existed boxed solutions
+- Works without javascript
+- Wide options for security configuration
+
+Cons: 
+
+- Slowness due to the full page reload
+- Coupled Backend and Frontend
+- Complex Development process
+- Deployment and configuration could be complicated and depend on the boxed
+  solution and technology stack
+
+**Hybrid** - MPA, and SPA combined: each page has to be compiled and could
+share some resources. Every page has own JS routing like wizards or
+subcomponents. Data is loaded both during page load and AJAX.
+
+
+<br>
+
+## SSR vs CSR pros/cons
+**CSR** - when the user opens a website, his browser makes a request to the
+server, and the user gets a response with a single HTML file without any
+content, loading screen, etc. It's a blank page until the browser fetches all
+linked JavaScripts and lets the browser compile everything before rendering the
+content.
+
+If you building a SPA and you don't want to configure everything on the server
+side like: i18n, router etc. you can just use create-react-app, angular-cli,
+vue-cli, etc.
+
+Pros:
+
+- Fast render after initial load
+- Faster navigation
+- Lower server load
+- Remarkable for web apps
+
+Cons: 
+
+- Slower initial load
+- Unpredictable performance – you never know if your user will open and
+  ‘compile’ your website on a mobile device with a very slow internet
+  connection or not updated browser
+- Client-side routing solutions can delay web crawling.
+- SEO – if you not implemented correctly
+- Initial req loads the page, CSS, layout, js,
+- Some or all content is not included
+
+**SSR** is a method to render a website, when the user opens your page, his
+browser makes a request to the server, and the server generates ready to
+provide HTML.
+
+Suits for:
+
+- mostly static sites (blog, portfolio, landing page), use frameworks like
+  Gatsby, it's not SSR, but it pre-renders the website into HTML at the build
+  time.
+- a web app with care about SEO, easier social media optimization and faster
+  render for user you should think about SSR and framework like next.js,
+  nuxt.js, etc
+
+Server-side device detection works by using the User-Agent string to uniquely
+identify the client device type. By matching this against a database of device
+capabilities, relevant details about the user’s device can be known, and can be
+used to tailor an optimized response for that device.
+
+ Pros:
+
+- SEO friendly – SSR guarantees your pages are easily indexable by search engines
+- Better performance for the user – User will see the content faster
+- Social Media Optimization: When people try to post your link on Facebook,
+  Twitter, etc. then a nice preview will show up with the page title,
+  description, and image.
+- Shared code with backend node
+- User-machine is less busy
+
+Cons: 
+
+- TTFB (Time to first byte) is slower; your server has to spend some time to
+  prepare HTML for your page instead of sending almost empty HTML doc with link
+  to javascript
+- The server will be busier, can execute fewer request per second
+- HTML doc will be bigger
+- The page is viewable sooner, but it's not interactive and the beginning, a
+  user has to wait until React will be done executing
+- Full page reload after routes change
+
+<br>
+## Micro-frontends vs monorepos
+**Monorepository**: Instead of managing multiple repositories, you keep all
+your isolated code parts inside one repository. Keep in mind the word
+isolated—it means that monorepo has nothing in common with monolithic apps. You
+can keep many kinds of logical apps inside one repo; for example, a website and
+its iOS app.
+The idea behind a monorepo is to store all code in a single version control
+system (VCS) repository. The alternative, of course, is to store code split
+into many different VCS repositories, usually on a service/application/library
+basis.
+
+If you are thinking about architecture, you will want to do two main things:
+Separate concerns and avoid code dupes. To make this happen, you will probably
+want to isolate large features into some packages and then use them via a
+single entry point in your main app.
+Instead of having a lot of repositories with their own configs, we will have
+only one source of truth — the monorepo.
+
+*Monorepo Advantages*:
+
+- One source of truth — Instead of having a lot of repositories with their own
+  configs, we can have a single configuration to manage all the projects,
+  making it easier to manage
+- Code reuse — If there is a common code or a dependency that has to be used in
+  different projects, we can actually share them easily
+- Transparency — It gives us visibility of code used in every project. We will
+  be able to check all the code in a single place
+- Easily refactor global features with atomic commits
+- Simplified package publishing
+- Easier dependency management: only one `package.json`. No need to re-install
+  dependencies in each repo whenever you want to update your dependencies
+- Re-use code with shared packages while still keeping them isolated
+
+*Monorepo Disadvantages*:
+
+- No way to restrict access only to some parts of the app
+- Poor Git performance when working on large-scale projects
+- Long build times — Since there is a lot of code in one place, the build time
+  is much longer compared to building separate projects independently
+- Open Source Vulnerability Prioritization and Licensing: Although monorepos
+  can make it easier to manage open source dependencies, they may complicate
+  the process of prioritizing vulnerability fixes and generating
+  product-specific attribution reports. You’d need to integrate Software
+  Composition Analysis (SCA) or open source management software with the build
+  system to understand the files and dependencies used to build each product.
+
+Tools:
+
+- *Bazel* is Google’s monorepo-oriented build system
+- *Yarn* is a JavaScript dependency management tool that supports monorepos
+  through *workspaces*.
+- *Lerna* is a tool for managing JavaScript projects with multiple packages,
+  built on Yarn.
+
+**Micro Frontends** are a way to split the monolith front-end codebase into
+smaller, more manageable pieces. As a result, front-end teams can enjoy similar
+benefits to those of microservices: maintainable codebases, autonomous teams,
+independent releases, and incremental upgrades.
+
+The idea behind Micro Frontends is to think about a website or web app **as a
+composition of features** which are owned by **independent teams**. Each team
+has a **distinct area of business** or **mission** it cares about and
+specialises in. A team is **cross functional** and develops its features
+**end-to-end**, from database to user interface.
+
+Micro frontends are usually thought of as a composition of independent
+frontends that happens at **runtime**, either on the server or on the
+client-side.
+
+Microfrontends are all about decoupling.
+
+Core Ideas behind Micro Frontends
+
+- *Be Technology Agnostic*: Each team should be able to choose and upgrade their
+  stack without having to coordinate with other teams. Custom Elements are a
+  great way to hide implementation details while providing a neutral interface
+  to others.
+- *Isolate Team Code*: Don't share a runtime, even if all teams use the same
+  framework. Build independent apps that are self contained. Don't rely on
+  shared state or global variables.
+- *Establish Team Prefixes*: Agree on naming conventions where isolation is not
+  possible yet. Namespace CSS, Events, Local Storage and Cookies to avoid
+  collisions and clarify ownership.
+- *Favor Native Browser Features over Custom APIs*: Use Browser Events for
+  communication instead of building a global PubSub system. If you really have
+  to build a cross team API, try keeping it as simple as possible.
+- *Build a Resilient Site*: Your feature should be useful, even if JavaScript
+  failed or hasn't executed yet. Use Universal Rendering and Progressive
+  Enhancement to improve perceived performance.
+
+MF provides:
+
+- individual pieces of the frontend can be developed, tested, and deployed
+  independently
+- individual pieces of the frontend can be added, removed, or replaced without
+  rebuilds
+- the different pieces of the frontend may be created using different
+  technologies
+
+Microfrontends can be very relevant when one or more of the following bullet points are given:
+
+- Multiple teams contribute to the frontend
+- Individual parts should be activated, deactivated, or rolled out on specific
+  users or groups
+- External developers should be able to extend the UI
+- The feature set of the UI is growing on a daily or weekly basis — without
+  impacting the rest of the system
+- Development speed should be a constant despite a growing application
+- Different teams should be able to use their own tooling
+
+**Integration approaches**
+Generally there is a micro frontend for each page in the application, and there
+is a single container application, which:
+ - renders common page elements such as headers and footers
+ - addresses cross-cutting concerns like authentication and navigation
+ - brings the various micro frontends together onto the page, and tells each
+   micro frontend when and where to render itself
+
+1. **Server-side template composition**: rendering HTML on the server out of
+   multiple templates or fragments. We can serve this file using Nginx,
+   configuring the $PAGE variable by matching against the URL that is being
+   requested. And we've split up our code in such a way that each piece
+   represents a self-contained domain concept that can be delivered by an
+   independent team. There could be a separate server responsible for
+   rendering and serving each micro frontend, with one server out the front
+   that makes requests to the others. With careful caching of responses, this
+   could be done without impacting latency.
+2. **Build-time integration**: to publish each micro frontend as a package, and
+   have the container application include them all as library dependencies. It
+   produces a single deployable Javascript bundle allowing us to
+   de-duplicate common dependencies from our various applications. However,
+   this approach means that we have to re-compile and release every single
+   micro frontend in order to release a change to any individual part of the
+   product. *We've seen enough pain caused by such a **lockstep release
+   process** that we would recommend strongly against this kind of approach to
+   micro frontends.* We should find a way to integrate our micro frontends at
+   run-time, rather than at build-time.
+3. **Run-time integration via iframes**: The easy isolation of iframes does
+   tend to make them less flexible than other options. It can be difficult to
+   build integrations between different parts of the application, so they make
+   routing, history, and deep-linking more complicated, and they present some
+   extra challenges to making your page fully responsive.
+4. **Run-time integration via JavaScript**: the most flexible one, and the one
+   that teams adopting most frequently. Each micro frontend is included onto
+   the page using a `<script>` tag, and upon load exposes a global function as
+   its entry-point. The container application then determines which micro
+   frontend should be mounted, and calls the relevant function to tell a micro
+   frontend when and where to render itself. Unlike with build-time
+   integration, we can deploy each of the `bundle.js` files independently. And
+   unlike with iframes, we have full flexibility to build integrations between
+   our micro frontends however we like. We could extend the above code in many
+   ways, for example to only download each JavaScript bundle as needed, or to
+   pass data in and out when rendering a micro frontend.
+5. **Run-time integration via Web Components**: One variation to the previous
+   approach is for each micro frontend to define an HTML custom element for the
+   container to instantiate, instead of defining a global function for the
+   container to call.
+
+Tools to Build Microfrontends
+
+- Client-Side Frameworks: Piral, Open Components, qiankun, Luigi, Frint.js
+- Server-Side Frameworks: Mosaic, PuzzleJs, Podium, Micromono
+- Helper Libraries: Module Federation, Siteless, Single SPA, Postal.js,
+  EventBus
+
+**Styling**
+Some choose to use a strict naming convention, such as BEM, to ensure selectors
+only apply where intended. Others, preferring not to rely on developer
+discipline alone, use a pre-processor such as SASS, whose selector nesting can
+be used as a form of namespacing. A newer approach is to apply all styles
+programatically with CSS modules or one of the various CSS-in-JS libraries,
+which ensures that styles are directly applied only in the places the developer
+intends. Or for a more platform-based approach, shadow DOM also offers style
+isolation.
+
+One of the most common questions regarding micro frontends is how to let them
+talk to each other. In general, we recommend having them communicate as little
+as possible, as it often reintroduces the sort of inappropriate coupling that
+we're seeking to avoid in the first place.
+That said, some level of cross-app communication is often needed. Custom events
+allow micro frontends to communicate indirectly, which is a good way to
+minimise direct coupling, though it does make it harder to determine and
+enforce the contract that exists between micro frontends. Alternatively, the
+React model of passing callbacks and data downwards (in this case downwards
+from the container application to the micro frontends) is also a good solution
+that makes the contract more explicit. A third alternative is to use the
+address bar as a communication mechanism.
+
+Testing is similar for monolithic frontends and micro frontends.
+Integration testing of the various micro frontends with the container
+application can be done using your preferred choice of functional/end-to-end
+testing tool (such as Selenium or Cypress).
+
+Pros:
+
+- Incremental upgrades
+- decoupled codebases
+- Deploying new features at different rates for different parts of the
+  application(Independent deployment)
+- Autonomous teams:
+    - Providing a way for different teams to own different parts of the
+      application
+    - Providing a way for teams to choose a set of technologies that suit the
+      purpose of a microfrontend and the expertise of the team
+
+Cons:
+
+- Payload size: Independently-built JavaScript bundles can cause duplication of
+  common dependencies, increasing the number of bytes we have to send over the
+  network to our end users. For example, if every micro frontend includes its
+  own copy of React, then we're forcing our customers to download React *n*
+  times.
+- Making a change across the entire application involves making changes to many
+  microfrontends done by multiple teams
+- Switching between teams and projects is difficult due to inconsistencies in
+  dependencies, tooling, and standards between microfrontends
+- Adding new microfrontends requires setting up a build process, testing, and
+  deployment
+- Sharing common functionality between different microfrontends requires a
+  non-trivial solution
+
+<br>
+
+## PWA
+
 
 <br>
 [Back to top](#content)

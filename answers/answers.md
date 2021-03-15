@@ -7,7 +7,11 @@
 - [COMMUNICATION PROTOCOLS](#communication-protocols)
     - [TCP/TLS/UDP](#tsptlsudp)
     - [HTTPS Purpose](#https-purpose)
-    - [HTTP vs HTTP 2.0 Advantages](#http-vs-http-2.0-advantages)
+    - [HTTP vs HTTP 2.0 Advantages](#http-vs-http-20-advantages)
+    - [WebSockets vs Pooling](#websockets-vs-pooling)
+    - [What is REST? Maturity levels](#what-is-rest-maturity-levels)
+    - [REST vs GraphQL pros/cons](#rest-vs-graphql-proscons)
+    - [API Documentation (Swagger, Open API, Postman)](#api-documentation-swagger-open-api-postman)
 - [SECURITY BASICS](#security-basics)
     - [MITM](#man-in-the-middle-attack)
     - [OWASP Top 10](#owasp-top-10)
@@ -41,6 +45,10 @@
    - [SSR vs CSR pros/cons](#ssr-vs-csr-proscons)
    - [Micro-frontends vs monorepos](#micro-frontends-vs-monorepos)
    - [PWA](#pwa)
+   - [CSS methodologies](#css-methodologies)
+   - [How to choose next project framework](#how-to-choose-next-project-framework)
+       - [React vs Vue vs Angular](#react-vs-vue-vs-angular)
+    
 
 # PROGRAMMING PARADIGMS
 
@@ -491,18 +499,507 @@ Pretty much all the benefits of HTTPS tie back to SEO:
 - Prevents Man-In-The-Middle Content Hijacking
 
 ## HTTP vs HTTP 2.0 Advantages
+**HTTP** is short for Hypertext Transfer Protocol is the method computers and
+servers use to request and send information.
 
-HTTP 2.0 in a nutshell:
-- New binary framing
-- One connection (session)
-- Many parallel requests (streams)
-- Header compression
-- Stream prioritization
-- Server push
+Here's a simplified summary of an HTTP exchange between a client and a server over TCP:
+
+1. Assuming the client knows the network address and port of the server, the
+   client can attempt to establish a TCP connection to it.
+2. If the network is up and the server is listening, then the connection is
+   established via a fancy handshake.
+3. The client sends an HTTP Request message over the connection.
+4. The server processes the request and then sends an HTTP Response message
+   over the connection.
+5. The client and server then agree to close the TCP connection with another
+   fancy handshake.
+
+It is important to note that HTTP/2 is not a replacement for HTTP. It is merely
+an extension, with all the core concepts such as HTTP methods, Status Codes,
+URIs, and Header Fields remaining the same.
+
+The key differences HTTP/2 has to HTTP/1.x are as follows:
+
+- It is **binary**(new *binary framing layer*), instead of textual: it allows
+  for more compact, more easily compressible, and less error-prone
+    transmissions.
+- It is fully **multiplexed**, instead of ordered and blocking: multiple
+  resources can be transferred simultaneously. Clients no longer need to wait
+  for earlier resources to finish downloading before the next one
+    begins(*head-of-line (HOL) blocking*). Website developers used workarounds
+    such as *domain sharding* to "trick" browsers into opening multiple
+    connections to a single host; however, this led to browsers opening
+    multiple TCP connections
+- It can use **one connection** for parallelism (session, streams): After a
+  connection is established, clients can send new requests while receiving
+  responses to earlier requests. Not only does this reduce the latency in
+  establishing new connections, but servers no longer need to maintain multiple
+  connections to the same clients
+- It uses **header compression** to reduce overhead: In HTTP/1.1, headers are
+  incompressible and repeated for each request. As the number of requests
+  grows, so does the volume of duplicate header information. HTTP/2 eliminates
+  redundant headers and compresses the remaining headers to drastically
+  decrease the amount of data repeated during a session
+- It allows **Server Pushing** to add responses proactively into the Browser
+  cache.
+
+**Stream Prioritization**
+When websites load the assets (HTML, CSS, JavaScript, images) that make up the
+web page the order in which they are loaded is important. You can’t have CSS
+(the styling) load at the end; otherwise, the web page may look deformed for
+the first few seconds.  Secondly, you can’t have assets that require the jquery
+library (JavaScript) load before jquery as this can even break the
+functionality of some of the features on the website.  With HTTP/1.1, this was
+easy, as head-of-line blocking made it simple to load various assets in the
+correct order. With HTTP/2, however, the response to the browser request may be
+received back in any order.  The new protocol solves this by allowing the
+browser to communicate with the server and indicate the priorities for the
+respective objects \ files.  No changes will be required by web \ app
+developers as modern web browsers will take care of prioritization and handling
+of data streams.
 
 **HTTP server push** server can push multiple resources in response to one
 request. Client can cancel stream if it doesn't want the resource. Resource
 goes into browsers cache. "Inlining" is a variant of "Server Push".
+
+The problems with resource inlining:
+- You will need a developer to create the critical portion of your CSS that is
+  used to render the visible part of your web page when it is first loaded. It
+  is not as easy as it sounds.
+- The CSS will need to be loaded every time, rather than being served from
+  browser cache on subsequent page loads. This will cause increased latency and
+  a slower site.
+- When updating your site's stylesheet, you will need to clear the cache of
+  every page.
+
+**SEO Benefits**
+Google is all about page speed and they reward sites that improve their speed.
+They're extremely focused on user experience, and faster page speeds are a huge
+step in the right direction. In addition, with mobile users increasing, one of
+the biggest SEO benefits of upgrading to HTTP/2 is that it will lead to faster
+load times on mobile devices—resulting in a better user experience.
+
+The key difference of **HTTP/3** is that HTTP/3 runs over QUIC instead of TCP.
+QUIC is a faster and more secure transport layer protocol.  QUIC is similar to
+TCP+TLS+HTTP2 but is implemented on top of *UDP*.
+
+<br>
+
+## WebSockets vs Pooling
+**WebSocket** is a computer communications protocol, providing full-duplex
+communication channels over a single TCP connection (no HTTP overhead).
+
+The WebSocket protocol enables interaction between a web browser (or other
+client application) and a web server with lower overhead than half-duplex
+alternatives such as HTTP polling, facilitating real-time data transfer from
+and to the server.
+
+How it works?
+
+1. The client asks for a web socket connection via HTTP,
+2. The server replies with 101 Switching Protocols,
+3. The server and the client establish a Web Socket TCP connection (ws:// or
+   wss:// schema).
+
+Using WebSockets, you can create truly real-time applications such as chat,
+collaborative document editing, stock trading applications, and multiplayer
+online games.
+
+Pros:
+
+- Full-duplex asynchronous messaging (two-way): both the client and the server
+  can stream messages to each other independently
+- Little overhead
+- Supported by all modern browsers
+- origin-based security model
+- WebSockets pass through most firewalls without any reconfiguration
+
+Cons:
+
+- Need special support in the server.
+- Not compatible with old browsers.
+- Don't automatically recover when connections are terminated
+
+**Polling** is a synchronous method wherein the client makes a request
+to the server to see if there is any information available. The client receives
+a response from the server even if there is no information available.
+Polling works well for cases where the exact interval of message availability
+is known. However, in most real-time applications, *message frequency is often
+unpredictable*. In addition, polling requires the client to open and close many
+*unnecessary connections*.
+
+**Long polling** (also known as **Comet**) is a design paradigm that describes a
+continuous, two-way interaction between a server and a web browser using native
+HTTP methods. The Comet approach turns the typical HTTP client-server model
+upside-down to enable a kind of reverse Ajax functionality, wherein the web
+server initiates a persistent HTTP connection with a client browser and
+actively pushes out data instead of waiting to serve responses. In other words,
+Comet represents a "Push-Style" or "Server-Push" mechanism in contrast with
+HTTP's "Request/Response" or "Get/Pull" mechanism.
+
+To apply Comet in a web application, two broad methods are available:
+- *Streaming*: Events are pushed from server to client over a single persistent
+  connection, and are usually processed inside a hidden iframe on the page or
+  via XMLHttpRequest.
+- *Long Polling*: The browser polls the server for new events with a persistent
+  request that is held open until it gets a response. When new data is
+  available, the server sends the response and a new long polling request is
+  made by the browser for further events. Rinse and repeat for sustained
+  interaction.
+
+The flow:
+1. A request is sent to the server.
+2. The server doesn't close the connection until it has a message to send.
+3. When a message appears – the server responds to the request with it.
+4. The browser makes a new request immediately.
+
+The server architecture must be able to work with many pending connections.
+
+The fact that the client has to constantly reconnect to the server for new
+information makes long polling a bad choice for many real-time applications.
+
+Long polling works great in situations when messages are rare.
+Every message is a separate request, supplied with headers, authentication
+overhead, and so on.
+
+Long polling is the simplest way of having persistent connection with server,
+that doesn't use any specific protocol like WebSocket or Server Side Events.
+
+Pros:
+
+- Backwards compatibility,
+- No special server support (for short polling),
+
+Cons:
+
+- Expensive in bandwidth and resources (HTTP overhead), Long polling is a lot
+  more intensive on the server
+- Latency
+- loss of messages and message ordering
+- resource consumption(server, user device: cpu and as a result battery)
+
+**Other server push techniques**
+
+1. **Event streams** and **EventSource**: 
+- A standardized version of HTTP streaming,
+- Uses special Content-Type: `text/event-stream`,
+- Standardized browser support via the *EventSource API*.
+
+**Pros**: easy to implement, compatible with old-style AJAX.
+**Cons**: HTTP overhead, one-way (server to client), inconsistent support.
+
+2. **Service workers** and **Push notifications**:
+- Service workers: technology for offline web apps, background work;
+- Push notifications: API to send notifications to a Service Worker.
+
+**Pros**: powerful, enables unique features (mobile oriented).
+**Cons**: still experimental, advanced API.
+
+<br>
+
+## What is REST? Maturity levels
+**REST** (stands for *Representational State Transfer*) is an API design
+architecture used to implement web services. 
+
+The core concept of REST is that everything is a resource.
+The beauty of REST is that a developer working with someone else’s API doesn’t
+need any special initialization or libraries. Requests can be simply sent via
+common software like cURL and web browsers.
+
+REST uses the standard CRUD HTTP Verbs (GET, POST, PUT, DELETE) and leverages
+HTTP conventions and centered around data resources (HTTP URIs).
+
+*REST-compliant* web services allow the requesting systems to access and 
+manipulate textual representations of web resources by using a uniform 
+and predefined set of stateless operations.
+
+Web service defined on principles of REST and can be defined as a **RESTful**
+web service. RESTful web service can use normal POST, DELETE, PUT, and HTTP
+verbs of GET for working with required component.
+
+REST web service is an architectural pattern for creating web services whereas
+the RESTful service is one that implements that pattern. So there is no special
+difference in between. However, how good your architecture complies with an
+absolute standard but how well it tallies your needs & grows with your
+business.
+
+REST defines **6 architectural constraints** which make any web service – a
+true RESTful API:
+
+1. *Uniform interface*: you MUST decide APIs interface for resources inside the
+   system which are exposed to API consumers and follow religiously.
+2. *Client–server*: means that client application and server application MUST
+   be able to evolve separately without any dependency on each other.
+3. *Stateless*: The server will not store anything about the latest HTTP
+   request the client made. It will treat every request as new. No session, no
+   history.
+4. *Cacheable*: caching shall be applied to resources when applicable, and then
+   these resources MUST declare themselves cacheable. Caching can be
+   implemented on the server or client-side.
+5. *Layered system*: REST allows you to use a layered system architecture where
+   you deploy the APIs on server A, and store data on server B and authenticate
+   requests in Server C, for example. A client cannot ordinarily tell whether
+   it is connected directly to the end server or an intermediary along the way.
+6. *Code on demand* (optional): Most of the time, you will be sending the
+   static representations of resources in the form of XML or JSON. But when you
+   need to, you are free to return executable code to support a part of your
+   application, e.g., clients may call your API to get a UI widget rendering
+   code. It is permitted.
+
+*Pros*:
+
+- easy to understand and learn
+- easy to explore and discover
+- The high load can be managed with help out of HTTP proxy server & cache
+- Separation between client and server, which helps apps be more scalable
+- Statelessness, which makes API requests very specific and detail-driven
+
+*Cons*:
+
+- Multiple Round Trips To Fetch Related Resources (waterfall like)
+- Over Fetching / Under Fetching: By using endpoint mydomain.com/posts/:id
+  we’re fetching data for a specific post. Each post might comprise the
+  following properties: id, title, user, and body. You’ll always get back the
+  complete set of data. There is no way to limit the response to only contain a
+  subset of data like title and user.
+
+The **Richardson Maturity Model** (RMM) is a method to evaluate the maturity of
+a RESTful web service according to **4 levels**. The aim of the research of the
+model as stated by the author was to find out the relationship between the
+constraints of REST and other forms of web services.
+
+The **level 0** of RMM is where there is a client and a server communicating
+with each other using a *single URI* and a *single HTTP method* (preferably a
+POST). The level 0 suggests the use of HTTP or RPC(Remote Procedure Call)
+invocations.
+
+**Level 1** of RMM uses multiple URIs, but a single HTTP (preferably a POST) for
+the endpoints. Here, a *unique URI* is given for each resource, making RMM Level
+1 APIs better than Level 0.
+In level 1 instead of thinking of web as a collection on endpoint think of it
+as a *collection of resources*.
+
+In the **Level 2**, separate URIs are given for separate resources, while
+incorporating *different HTTP verbs* according to the CRUD usage of those
+resources.  Level 2 of RMM is the stage where REST principles are being
+followed, by letting the business entities (resources) be manipulated over the
+network using different HTTP verbs.
+
+Level 2.1 - HTTP headers
+Level 2.2 - Query Parameters
+Level 2.3 - Status Codes
+
+**Level 3** of RMM uses all three factors URI, HTTP verbs, and HATEOAS or
+Hypermedia Controls. HATEOAS stands for **Hypertext As The Engine Of
+Application State**.
+The point of hypermedia controls is that they tell us what we can do next, and
+the URI of the resource we need to manipulate to do it. HATEOAS makes endpoint
+responses to be self-explanatory.
+The level 3 of this model suggests that clients making a call to the server not
+only receives a data or state of the resource but also the links to actions it
+can take on the resource.
+
+<br>
+
+## REST vs GraphQL pros/cons
+REST and GraphQL can both be operated over HTTP, though GraphQL is protocol
+agnostic.
+
+The main and most important difference is that GraphQL is not dealing with
+dedicated resources. Instead everything is regarded as a graph and therefore is
+connected.
+
+GraphQL has only **one endpoint**, where you send all your queries. With a REST
+approach, you create multiple endpoints and use HTTP verbs to distinguish read
+actions (GET) and write actions (POST, PUT, DELETE). GraphQL does not use HTTP
+verbs to determine the request type.
+
+With REST, you generally cannot choose what the server returns back to you,
+unless the server implements partial responses using sparse fieldsets, and
+clients use that feature. The API maintainer cannot enforce such filtering.
+With GraphQL you explicitly request **just the information you need**, you
+don't "opt out" from the full response default, but it's mandatory to pick the
+fields you want.
+This helps saving resources on the server, since you most probably need less
+processing, and also network savings, since the payload to transfer is smaller.
+
+With REST usually there is no way to determine if a field is needed by the
+client, so when it comes to refactoring or deprecating, it's impossible to
+**determine actual usage**.
+GraphQL makes it possible to track which fields are used by clients.
+
+GraphQL allows to access nested data resources.
+
+A REST API is based on JSON which cannot provide type control. GraphQL has a
+**Type System**.
+
+**Error handling** in REST is pretty straightforward, we simply check the HTTP
+headers to get the status of a response. Depending on the HTTP status code (
+404, 503, 500 etc) we get, we can easily tell what the error is and how to go
+about resolving it. GraphQL on the other hand, when operated over HTTP, we will
+always get a 200 OK response status. When an error occurs while processing
+GraphQL queries, the complete error message is sent to the client with the
+response.
+
+Since HTTP already implements **caching**, and REST is implemented using HTTP, the
+client can use HTTP caching to avoid refetching resources. GraphQL has no
+caching mechanism in place, hence leaving the clients with the responsibility
+of taking care of caching on their end.
+
+Often when consuming third-party REST APIs, we see stuff like v1, v2, v3 etc.
+which simply indicate the version of the REST API we are using. This leads to
+code redundancy and less maintainable code. With GraphQL, there is no need for
+**versioning** as we can easily add new fields and types to our GraphQL API without
+impacting existing queries. Also, we can easily mark fields as deprecated and
+the fields will be excluded from the response gotten from the server.
+
+**Which one is better?**
+GraphQL is a perfect fit when you need to expose complex data representations,
+and when clients might need only a subset of the data, or they regularly
+perform nested queries to get the data they need.
+As with programming languages, there is no single winner, it all depends on
+your needs. Also, you can use both.
+
+**GraphQL benefits**:
+
+- *Avoid over-fetching* (by specify the exact fields you need)
+- *Prevent multiple API calls*  
+- *Less communication overhead with API developers*: Sometimes to fetch the
+  exact data you need, especially if you need to fetch more data and want to
+  avoid multiple API calls, you will need to ask your API developers to build a
+  new API. With GraphQL, your work is independent of the API team! This allows
+  you to work faster on your app.
+- *Self-documenting*: Every GraphQL API conforms to a "schema" which is the
+  graph data model and what kinds of queries a client can make. This allows to
+  build tools to explore & visualise your API or create IDE plugins that
+  autocomplete your GraphQL queries.
+
+A **GraphQL fragment** is a reusable part of the query. You may run into
+situations where you need to query for the same fields in different queries. If
+you notice that your query has many repetitive fields in multiple areas, you
+can consolidate them into a reusable unit called a fragment.
+A GraphQL fragment lets you build multiple fields, and include them in multiple
+queries. You can think of it as functions in programming languages, that are
+reusable units.
+A GraphQL Fragment is a reusable unit of a GraphQL query, which creates a
+shared piece of query logic.
+
+Benefits of using a GraphQL fragment:
+
+- Reusability – you can organize your queries into reusable units
+- Caching – GraphQL clients make use of fragments, to provide caching options
+
+**Rest Pros/Cons**:
+
+- +Will scale indefinitely
+- +High performance (especially over HTTP2)
+- +Proven for decades
+- +Server-driven application state (server tells you what you can call an when)
+- +Full decoupling of client and server enabling the independent evolution
+- +File uploading
+- -waterfall of requests/responses
+- -you have to think about use cases upfront
+- -Multiple APIs (or dedicated resources) for specific client needs
+
+**GraphQL Pros/Cons**:
+- +Contract-driven by nature
+- +Built-in introspection
+- +Easy to keep consistent and to govern
+- +Closer to SOAP which is good for enterprises
+- +One API for all (including specific) client needs
+- +Self-documenting
+- -File uploading
+- -Neglects the problems of the distributed system
+- -Server and clients coupled at the client programming time, application state
+  is not driven by the server
+- -Query optimization
+- -Throws away everything HTTP was figuring out for last 17 years
+- -JSON representation only
+- -Too few vendors in the ecosystem, doesn't have as many tools and
+  integrations as REST
+
+<br>
+
+## API Documentation (Swagger, Open API, Postman)
+**API documentation** is the collection of references, tutorials, and examples
+that help developers use your API.
+
+The best API docs have answers:
+
+- what is possible with API
+- how to get started
+- helps with questions about syntax or functionality
+
+API description formats like the OpenAPI/Swagger Specification have automated
+the documentation process, making it easier for teams to generate and maintain
+them.
+
+
+**Why Document APIs**?
+
+- *Improved User Adoption* - People adopt products they enjoy using. If you get
+  your documentation right, more people will find value in your services
+  easily, leading to better growth and adoption.
+- *Increased Awareness* - As more users adopt your APIs and reach critical
+  mass, there will be a probable increase in evangelism and word-of-mouth
+  publicity by your satisfied consumers, leading to the network effect.
+- *Saves Support Time and Costs* - good documentation decreases the amount of
+  time spent onboarding new users.
+- *Easier Maintenance*
+
+**OpenAPI Specification** (formerly Swagger Specification) is an API
+description format for REST APIs. An OpenAPI file allows you to describe your
+entire API, including:
+
+- Available endpoints (/users) and operations on each endpoint (GET /users, POST /users)
+- Operation parameters Input and output for each operation
+- Authentication methods
+- Contact information, license, terms of use and other information.
+
+API specifications can be written in YAML or JSON.
+
+**Swagger** is a set of open-source tools built around the OpenAPI Specification
+that can help you design, build, document and consume REST APIs.
+The major Swagger tools include:
+
+- Swagger Editor – browser-based editor where you can write OpenAPI specs.
+- Swagger UI – renders OpenAPI specs as interactive API documentation.
+- Swagger Codegen – generates server stubs and client libraries from an OpenAPI
+  spec.
+
+**Why Use OpenAPI?**
+The ability of APIs to describe their own structure is the root of all
+awesomeness in OpenAPI. Once written, an OpenAPI specification and Swagger
+tools can drive your API development further in various ways:
+
+- Design-first users: use Swagger Codegen to generate a server stub for your
+  API. The only thing left is to implement the server logic – and your API is
+  ready to go live!
+- Use Swagger Codegen to generate client libraries for your API in over 40
+  languages.
+- Use Swagger UI to generate interactive API documentation that lets your users
+  try out the API calls directly in the browser.
+- Use the spec to connect API-related tools to your API. For example, import
+  the spec to SoapUI to create automated tests for your API.
+- And more! Check out the open-source and commercial tools that integrate with
+  Swagger.
+
+**Postman** supports OpenAPI 3.0.
+When we are talking about API Documentation, I prefer to use the Postman
+approach to do it. The result is online documentation updated in real time when
+you change your collection in Postman, the organisation is straightforward and
+divided into folders and subfolders. The postman has many different
+fields/options to write your documentation in each step of your application,
+like endpoints, fields, URL parameters etc.
+
+You can automatically generate documentation for your Postman APIs. You can
+share your documentation privately or publish it on the web. Postman generates
+and hosts documentation based on collections, synced in realtime and accessible
+via the browser. You can use documentation to collaborate with team members and
+partners, or to support developer adoption for your public APIs.
+
+Postman болеее гибки тул и более удобен в использовании именно для фронта, а swagger - для бэка. В Postman можно тесировать енд поинты, кондишены, хедеры, зпустить последовательность запросов.
+
 <br>
 [Back to top](#content)
 <br>
@@ -2066,8 +2563,9 @@ Cons:
 - SEO (In the last couple of years, Google has become much better at indexing
   JavaScript. Still, Google admits it sometimes can't properly index
   single-page applications. Not to mention that other search engines haven't
-  yet achieved the same SPA-crawling prowess.)
-- JavaScript Dependency
+  yet achieved the same SPA-crawling prowess.), (could be improved by SSR)
+- JavaScript Dependency (could be improved by SSR and not actual any more as
+  all sites use JS)
 - Memory leaks 
 
 Multi-page applications (**MPA**s) are complex websites. Such website reloads
@@ -2104,7 +2602,6 @@ Cons:
 **Hybrid** - MPA, and SPA combined: each page has to be compiled and could
 share some resources. Every page has own JS routing like wizards or
 subcomponents. Data is loaded both during page load and AJAX.
-
 
 <br>
 
@@ -2177,6 +2674,7 @@ Cons:
 - Full page reload after routes change
 
 <br>
+
 ## Micro-frontends vs monorepos
 **Monorepository**: Instead of managing multiple repositories, you keep all
 your isolated code parts inside one repository. Keep in mind the word
@@ -2401,14 +2899,389 @@ Cons:
 <br>
 
 ## PWA
+A **progressive web app (PWA)** is the set of web application development
+techniques that entails building apps that feel and look like native ones,
+using a web stack (JS, HTML, and CSS).
+PWA is the web app with the native-app flavor: After the installation, a user
+clicks on its icon on a device home screen and gets straight to the website.
 
+The main features:
+
+- Full responsiveness and browser compatibility: PWAs work with all browsers
+  and are compatible with any device, regardless of screen size and other
+  specifications.
+- Connectivity independence
+- App-like interface
+- Push notifications
+- Self-updates
+- Safety: These apps are served through HTTPS
+- Discoverability and easy installation: While search engines classify PWAs as
+  applications, they are not distributed via app stores. These apps can be
+  shared through a URL instead so they’re easily found. The installation is
+  simple and entails visiting a site and adding it to a device home screen
+
+Technical components of PWAs:
+
+- The Web App manifest
+- Service Worker (offline work mode, push notifications, background
+  synchronization)
+- The application shell architecture
+- Transport Layer Security (TLS)
+
+Pros:
+
+- Development savings: developers don’t need to build the app for multiple
+  platforms because a single progressive app can perform well on both Android
+  and iOS and fit various devices
+- Reduced installation friction
+- Easy updates
+
+Cons:
+
+- Limited functionality and increased battery use compared to native apps
+- Search traffic losses due to no presence on app stores
+
+<br>
+
+## CSS methodologies
+CSS lacks a built-in scoping mechanism. Everything in CSS is global. That means
+any change you make has the potential to cascade and alter the presentation of
+unrelated bits of the UI.
+
+Extended CSS languages, a.k.a. CSS preprocessors, such as Sass, Less and Stylus
+make things a little easier by offering up features that make writing CSS
+easier. But even these extended CSS languages, in my opinion, don't truly fix
+the scalability issue.
+
+Until CSS gets its own native scoping mechanism, we need to devise our own
+system for locking down styles to specific sections of an HTML document.
+
+CSS methodologies are the solution.
+
+A **CSS methodology** is a set of guidelines for writing modular, reusable and
+scalable code. 
+
+Helps with managing specificity.
+
+Adopting a CSS methodology can reduce the learning curve for new designers
+joining a project, and make for a smoother transition when a project is handed
+over to a new team.
+
+CSS methodologies encourage reuse of existing code, they enforce consistency in
+visual designs and reduce page size and increase page rendering speed.
+
+
+Each CSS methodology offers a slightly different set of solutions to the CSS
+scalability/maintainability problem. General solutions they provide -
+modularizing front-end code and making CSS easier to scale.
+
+**BEM** methodology in CSS is a component-based approach for web development
+where the idea is to divide the user interface into various independent blocks.
+Its intention is to help developers better understand the relationship between
+the HTML and CSS in a project. All selectors in a BEM have the same weight
+which makes it much easier to redefine styles written according to BEM
+methodology.  In BEM, the block can have different elements, and both block and
+elements can have several modifiers. The best way to use BEM is with classes
+and not to use IDs because classes allow you to repeat names if necessary and
+create more consistent coding structure.
+
+**In a nutshell**: Use a standard naming convention for classes.
+
+The main advantage of BEM is it defines the individual task of each tag and
+their relation to another.
+
+*Blocks* are independent components in a page they can be header, content,
+sidebar, footer, and search. A block name is always unique, setting the
+namespace for elements and providing a visible connection between the block
+parts. CSS class is formed as just the block: `.block`.
+
+*Element* is a component inside the block that performs a particular function.
+Any element is semantically tied to its block. An element can be for example, a
+text input box with a button. Class is formed by the block name plus two
+underscores followed by the element name: `.block__.element`.
+
+*Modifier* is how we represent the variations of a block. For example, the
+button being color red. CSS class is formed with the block or element's name
+plus two dashes: `.block__.element--.modifier` which is an element modifier or
+the block-level modifiers can be directly attached to the block like: `.block-
+-.modifier`.
+
+Benefits:
+- Modularity: Block styles are never dependent on other elements on a page, so
+  you will never experience problems from cascading. You also get the ability
+  to transfer blocks from your finished projects to new ones.
+- Reusability: Composing independent blocks in different ways, and reusing them
+  intelligently, reduces the amount of CSS code that you will have to maintain.
+  With a set of style guidelines in place, you can build a library of blocks,
+  making your CSS super effective.
+- Structure: BEM methodology gives your CSS code a solid structure that remains
+  simple and easy to understand.
+
+**OOCSS (Object-Oriented CSS)** treats page elements as objects, giving all
+objects classes, treating the objects’ classes as single entities in style
+sheets, and taking it from there.
+
+**In a nutshell**: Divide layout into objects, then abstract their CSS into
+modules.
+
+Object-Oriented CSS methodology has a lot in common with the object-oriented
+programming approach because when using it, we create default objects.
+OOCSS promotes heavy reuse of CSS codes, to reduce the code size.
+
+OOCSS involves identifying objects on a page and separating their structural
+and visual CSS styles into two declaration blocks. These blocks can then be
+reused by different elements, and changes need only be made in one place,
+leading to better consistency.
+
+Declaration blocks are applied to elements using single-class selectors to
+avoid specificity issues. This technique also separates content from container,
+so objects look the same wherever they appear. Classes also decouple mark-up
+from CSS. Using `.title` instead of `h2` for heading `<h2 class="title">`
+allows it to be changed to `<h3 class="title">` without changing the CSS. 
+
+To further separate HTML and CSS, class names should not include property
+values. A class 'blue' would require renaming in HTML and CSS if the color
+changed.
+
+OOCSS introduces many useful concepts, but its lack of rules leads to
+variations in interpretation that can result in inconsistencies. It has,
+however, been used as inspiration for stricter methodologies.
+
+**SMACSS (Scalable and Modular Architecture for CSS)** works by dividing CSS
+into five categories – base, layout, module, state and theme – commonly split
+into separate files.
+
+**In a nutshell**: Split CSS code across multiple files for better performance
+and organization.
+
+*Base* styles override the default styles and are mainly applied using element
+selectors:
+```css
+h1 { font-size: 20px; }
+a { text-decoration: none; }
+```
+*Layout* styles are for major objects like headers and sidebars. They are applied
+using IDs or classes with generic helper declarations optionally prefixed with
+l-:
+```css
+#header { height: 50px; }
+.l-right { float: right; }
+```
+*Module* styles are for smaller, reusable objects like buttons and lists, each
+commonly with its own file. They are applied using classes, with nested items
+classes commonly prefixed with the ancestor class: `.list { … } .list--icon { …
+} .list--text { … }`.
+
+*State* styles are for changeable states, like hidden or disabled. They are
+commonly applied with class names prefixed with is- or has- and chained to
+other selectors: `.button { … } .button.is-disabled { … }`.
+
+SMACSS provides well-organised CSS code split logically across multiple files.
+Using SMACSS does, however, **introduce specificity traps** by allowing IDs and
+relying on selector chaining for state and some layout declarations.
+
+**Atomic CSS (ACSS)** encourages developers to define single-purpose class
+selectors for every reusable declaration. Unlike OOCSS, which discourages CSS
+property values in class names, ACSS welcomes it.
+
+**In a nutshell**: Create a class selector for every repeating CSS declaration.
+
+Using ACSS styles can be
+defined and applied to elements as:
+```css
+.mb-sm { margin-bottom: 16px; }
+.mb-lg { margin-bottom: 32px; }
+.color-blue { color: #1e90ff; }
+```
+There are programmatic approaches to ACSS that automatically generate CSS based
+on classes or attributes that users add to the HTML (Atomizer).
+
+The main benefit of ACSS is the ease of maintaining consistent code and not having to invent classes for components requiring a single CSS rule. 
+
+However, ACSS used on its own can lead to an unmanageable number of classes and
+bloated HTML files. It is therefore  common to only use ACSS principles to
+create helper classes that define consistent, reusable declaration blocks.
+
+**CSS-in-JS** is a styling technique where JavaScript is used to style
+components. When this JavaScript is parsed, CSS is generated (usually as a
+`<style>` element) and attached into the DOM. It allows to abstract CSS to the
+component level itself, using JavaScript to describe styles in a declarative
+and maintainable way.
+
+**Benefits**:
+
+- Local Scoping: True rules isolation. Scoped selectors are not enough. CSS has
+  properties which are inherited automatically from the parent element, if not
+  explicitly defined.
+- Scoped selectors. CSS has just one global namespace. It is impossible to
+  avoid selector collisions in non-trivial applications. CSS in JavaScript
+  generates unique class names by default, when it compiles to CSS.
+- Vendor prefixing. The CSS rules are automatically vendor prefixed, so you
+  don't have to think about it.
+- Encapsulation: hide the details of implementation
+- Portability (Thinking in components): As components include all the source
+  code, styles, and logic they need for proper running, you can securely move
+  them around. 
+- Reusability (Code sharing): Components are reusable, so you only have to write them once
+- Dynamic Functionality (leverages the full power of the JS): you can apply
+  complex logic to your style rules, such as loops, conditionals, variables,
+  state-based styling, and more.
+- Only the styles which are currently in use on your screen are in the DOM.
+- Dead code elimination.
+
+**Drawbacks**:
+- Learning Curve: Besides learning the new syntax, you also need to pick up a
+  new way of thinking, which needs time and might slow down your development
+  workflow for a while.
+- Extra Layer of Complexity: Putting a CSS-in-JS library into use adds an extra
+  layer to your front-end stack, which can sometimes be unnecessary. Although
+  CSS-in-JS manages complexity excellently, it's not always worth the hassle,
+  especially in the case of a simpler project.
+- Code Readability: Automatically generated selectors significantly worsen code
+  readability. This can be a huge concern for you if you regularly use your
+  browser's developer tools for debugging, but also for beginners, as it's
+  essential for them to understand the code they wrote.
+- Runtime cost: When CSS is generated from JavaScript at runtime, in the
+  browser, there is an inherent overhead. It varies from library to library.
+  Major differences at runtime appear depending on the need to have a full CSS
+  parsing of template strings, amount of optimizations, dynamic styles
+  implementation details, hashing algorithm and framework integrations cost.
+  Libraries support multiple strategies:
+   - Runtime generation only
+   - Runtime generation with Critical CSS
+   - Build-time extraction only
+   - Build-time extraction with Critical CSS
+
+**CSS Modules**
+CSS was defined to style documents, not UI components. The lack of modularity
+in CSS language makes it hard to maintain complex or legacy code. Developers
+are afraid to make code changes since it's easy to break something when CSS
+definitions are global.
+
+CSS Modules solves these problems by limiting the scope to components. CSS
+Modules is not an official standard. It's a community-led effort popularized by
+the ReactJS ecosystem.
+
+The problem of global scope is solved by CSS Modules since class names are
+local to the component. The same class name can be used in another component
+with different styling. Tools convert local names to globally unique names.
+
+Deeply nested CSS selectors result in what we call high specificity. This
+impacts performance. With CSS Modules, names are globally unique and locally
+specific. Hence, flat selectors are more than sufficient. Because CSS styles
+are now encapsulated within components, code becomes more maintainable. Code
+can be refactored. Dead code can be removed.
+
+*Essential features*:
+- Local Scope
+- Global Scope: Using `:global` switch
+- Composition: A selector can extend styles from another
+- Naming: Names should be in camelCase.
+- Integration: CSS Modules should have tooling support to compile CSS to a
+  low-level format called Interoperable CSS (ICSS). It should also work nicely
+  with CSS processors (Less, Sass, PostCSS), bundlers (Webpack) and JS
+  frameworks (Angular, React).
+
+*Why?*: modular and reusable CSS!
+- No more conflicts.
+- Explicit dependencies.
+- No global scope.
+
+PostCSS-Modules allows to use CSS Modules for static builds and the server side.
+
+<br>
+
+## How to choose next project framework
+Risks that should be considered choosing a UI framework:
+- customer preferences
+- Usage Context: list of project requirements and whether a framework is
+  suitable for that purpose or maybe is not needed at all.
+- existing code base(if any)
+- License
+- community support
+- documentation
+- performance
+- team experience
+- flexibility
+- popularity trends (npm, google, stackoverflow)
+- Community, github stars, repos, forks, components
+- learning curve
+- Features out of the box(routing, SSR)
+- Browser's support
+- Native/mobile apps support
+- Scalable for big teams
+- if it is friendly to bundlres, linters, testing
+- Ease of integration to existing apps (micro frontends-friendliness)
+- Support: Bug Fixes/ Updates
+
+*Software Pattern*: Almost every framework out there exclusively uses the MVC
+pattern. MVC, which stands for Model-View-Controller, helps you keep your data:
+the model, the logic: the controller and the user interface: the view, separate
+from each other. This in turn lets you write better, tighter code which
+ultimately results in better applications.
+Just because almost everyone uses MVC doesn't mean that is everything you need
+to know though. There are a couple of variants including MVP:
+Model-View-Presenter, MVA: Model-View-Adapter and AVC:
+Application-View-Controller.
+
+What metrics to look:
+
+- Performance: How long does this App take to show content and become usable?
+- Size: How big is the App?
+- Lines of Code: How many lines of code did the author need to create the
+  RealWorld app based on spec?
+
+### React vs Vue vs Angular
+All three ideal for large scale and feature rich WEB applications
+
+| Criteria       | React                                                                        | Vue.js                                                                                      | Angular (2.x - 8.x)                                                                           |
+|----------------|------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Native Apps    | React Native                                                                 | Vue Native                                                                                  | + and Hybrid Apps                                                                             |
+| Learning Curve | Low (developer needs to be familiar with HTML and Javascript only to start)  | Low (developer needs to be familiar with HTML and Javascript only to start)                 | MEDIUM : Typescript, HTML, CSS, directives, decorators, services, dependency injection, pipes |
+| DOM            | Virtual DOM                                                                  | Virtual DOM                                                                                 | Regular DOM/Shadow DOM                                                                        |
+| Testing tools  | Jest, Enzyme + Mocha + Chai                                                  | Built-in QUnit, also supports : Jasmine, Mocha, Chai                                        | Any testing framework. Karma is recommended as a testrunner                                   |
+| Templating     | JSX                                                                          | Provides a template engine based on HTML                                                    | supports any templating engine that compiles to HTML                                          |
+| Routing        | Not in the box                                                               | Not in the box. But has an official solution written by developers of core team - Vue-Route | Component Router                                                                              |
+| Security       | Only build-in XSS protection. Other protect is the conscience of developers. | Most protection responsibilities is the conscience of developers.                           | High. Includes CSRF, XSSI, XSS defense.                                                       |
+| SSR            | built-in react-dom/server, community framework Next.js                       | built-in vue-server-renderer, community framework Nuxt.js                                   | built-in                                                                                      |
+
+**Vue.js** focuses on detecting changes through getters/setters in objects (Vue
+will wall through all data objects and its own properties at the building of
+component and converts them using Object.defineProperty). In these methods core
+manages dependencies and notifies about changes.
+Vue.js uses light-weight implementation of Virtual DOM. Vue component's
+dependencies automatically detects during rendering. After state change, only
+needed components will be updated.
+Vuex is useful library, which can improve state management in an app with good
+integration with Vue.js core.
+
+**Angular 2** runtime is divided into application and render layer. Elements of
+the application do not directly depend or access the elements of the render
+code, and vice versa. They can only communicate via a renderer transport. 
+Angular 2 forces the reactive paradigm, it's based on top of RxJs and a lot of
+interfaces return Observables.
+
+**React** does not do everything for the developer, it's merely a tool for building
+the UI of a web app. It does not have support for routing or models, at least
+not out of the box. While some missing features can be added through libraries,
+to start using React and use it in production, you still would need to have
+experience, or at least a good grasp on what the best libraries to use would
+be. For making React more complete solution you can use one of an architecture
+patterns, which revolves around a strict unidirectional data flow. This means
+that all data in an application follows the same lifecycle pattern, making the
+logic of your app more predictable and easier to understand. It also encourages
+data normalization, so that you don't end up with multiple, independent copies
+of the same data that are unaware of one another.
 
 <br>
 [Back to top](#content)
 <br>
+
 --------------------
 
-
+<br>
+[Back to top](#content)
+<br>
 
 
 
